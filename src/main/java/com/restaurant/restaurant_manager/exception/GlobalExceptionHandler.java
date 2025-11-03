@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,17 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "An internal server error occurred: " + ex.getMessage(),
+                null
+        );
+    }
+    /**
+     * Bắt lỗi 403 (Forbidden) - Khi user đã đăng nhập nhưng không có quyền
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex) {
+        return ApiResponse.error(
+                HttpStatus.FORBIDDEN,
+                "Access Denied: You do not have permission to access this resource.",
                 null
         );
     }
