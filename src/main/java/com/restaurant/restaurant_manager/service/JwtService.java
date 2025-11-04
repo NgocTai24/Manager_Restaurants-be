@@ -22,28 +22,38 @@ public class JwtService {
     @Value("${jwt.expiration-time}")
     private long EXPIRATION_TIME;
 
-    // Trích xuất email (username) từ token
+    @Value("${jwt.refresh-token.expiration-time}")
+    private long REFRESH_EXPIRATION_TIME;
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Trích xuất một claim (thông tin) cụ thể
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Tạo token
+    // Tạo Access Token (thời hạn ngắn)
     public String generateToken(UserDetails userDetails) {
+        return buildToken(userDetails, EXPIRATION_TIME);
+    }
+
+    // Tạo Refresh Token (thời hạn dài)
+    public String generateRefreshToken(UserDetails userDetails) {
+        return buildToken(userDetails, REFRESH_EXPIRATION_TIME);
+    }
+
+    // Hàm chung để tạo token
+    private String buildToken(UserDetails userDetails, long expiration) {
         return Jwts.builder()
-                .subject(userDetails.getUsername()) // "username" chính là email (do ta đã override)
+                .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // Xác thực token (quan trọng)
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
@@ -65,7 +75,6 @@ public class JwtService {
                 .getPayload();
     }
 
-    // Lấy key bí mật
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);

@@ -36,23 +36,22 @@ public class SecurityConfig {
 
                 // 3. Cấu hình phân quyền (Authorization)
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép các API này mà không cần đăng nhập
                         .requestMatchers(
-                                "/api/v1/auth/**", // Các API đăng nhập, đăng ký
-                                "/api/v1/public/**", // Các API public (ví dụ: xem menu)
-                                // (Các URL cho Swagger/OpenAPI - nếu dùng)
+                                "/api/v1/auth/**", // <-- Đã bao gồm /register, /login, /refresh, /forgot-password ...
+                                "/api/v1/public/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Yêu cầu quyền ADMIN cho các API admin
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-
-                        // Yêu cầu quyền STAFF hoặc ADMIN
                         .requestMatchers("/api/v1/staff/**").hasAnyRole("ADMIN", "STAFF")
 
-                        // Tất cả các request còn lại đều phải đăng nhập
+                        // --- THÊM DÒNG NÀY ---
+                        // Tất cả API trong /api/v1/user/ (như change-password, logout)
+                        // Yêu cầu phải đăng nhập (vai trò bất kỳ)
+                        .requestMatchers("/api/v1/user/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
 
