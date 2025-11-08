@@ -63,8 +63,7 @@ public class User implements UserDetails { // <-- THÊM "implements UserDetails"
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Trả về danh sách quyền (ROLE) của user
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override

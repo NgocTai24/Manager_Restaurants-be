@@ -8,6 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.restaurant.restaurant_manager.dto.user.UpdateUserRequest;
+import com.restaurant.restaurant_manager.dto.user.UserResponse;
+import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -43,5 +51,59 @@ public class UserService {
         user.setRefreshToken(null);
         user.setRefreshTokenExpiry(null);
         userRepository.save(user);
+    }
+
+    // --- ADMIN: Lấy tất cả users ---
+//    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // --- ADMIN: Lấy user theo ID ---
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        return convertToResponse(user);
+    }
+
+    // --- ADMIN: Cập nhật user ---
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse updateUser(UUID id, UpdateUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        // Cập nhật thông tin
+        user.setFullName(request.getFullName());
+        user.setDateOfBirth(request.getDateOfBirth());
+        user.setAddress(request.getAddress());
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+
+        return convertToResponse(userRepository.save(user));
+    }
+
+    // --- ADMIN: Xóa user ---
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUser(UUID id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+        userRepository.deleteById(id);
+    }
+
+    // --- Helper: Chuyển Entity sang DTO Response ---
+    private UserResponse convertToResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .dateOfBirth(user.getDateOfBirth())
+                .address(user.getAddress())
+                .role(user.getRole())
+                .build();
     }
 }

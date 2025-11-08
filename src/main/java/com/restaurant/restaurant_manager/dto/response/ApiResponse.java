@@ -23,7 +23,7 @@ public class ApiResponse<T> {
     private String message;
     private T data;
     private List<String> errors;
-    private final LocalDateTime timestamp = LocalDateTime.now();
+//    private final LocalDateTime timestamp = LocalDateTime.now();
 
     // ----- Các hàm helper static để tạo response nhanh -----
 

@@ -48,7 +48,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setDateOfBirth(request.getDateOfBirth());
         user.setAddress(request.getAddress());
-        user.setRole(UserRole.STAFF);
+        user.setRole(UserRole.ADMIN);
 
         User savedUser = userRepository.save(user);
 
@@ -66,6 +66,7 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
+                .role(savedUser.getRole())
                 .build();
     }
 
@@ -90,6 +91,7 @@ public class AuthService {
                 .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .role(user.getRole())
                 .build();
     }
 
@@ -115,6 +117,7 @@ public class AuthService {
                 .refreshToken(refreshToken) // Trả lại refresh token cũ
                 .email(user.getEmail())
                 .fullName(user.getFullName())
+                .role(user.getRole())
                 .build();
     }
 
@@ -208,6 +211,7 @@ public class AuthService {
                     .refreshToken(refreshToken)
                     .email(user.getEmail())
                     .fullName(user.getFullName())
+                    .role(user.getRole())
                     .build();
 
         } catch (GeneralSecurityException | IOException e) {

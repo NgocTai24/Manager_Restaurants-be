@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.dto.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.restaurant.restaurant_manager.entity.enums.UserRole;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,4 +17,5 @@ public class AuthResponse {
 
     private String email;
     private String fullName;
+    private UserRole role;
 }
