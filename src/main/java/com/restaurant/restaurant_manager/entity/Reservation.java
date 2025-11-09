@@ -2,9 +2,7 @@ package com.restaurant.restaurant_manager.entity;
 
 import com.restaurant.restaurant_manager.entity.enums.ReservationStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
@@ -12,7 +10,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "reservations")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Reservation {

@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,5 +34,5 @@ public class RestaurantTable {
     private TableStatus status;
 
     @OneToMany(mappedBy = "table", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Reservation> reservations;
+    private Set<Reservation> reservations = new HashSet<>();
 }
