@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,16 +26,28 @@ public class Customer {
     private String name;
 
     @Column(nullable = false, unique = true)
-    private String phone;
+    private String phone; // Đây là "khóa chính" nghiệp vụ
 
     @Column(unique = true)
     private String email;
 
-    // Một khách hàng có thể có nhiều lượt đặt bàn
+    // --- CÁC TRƯỜNG BỔ SUNG ĐỂ QUẢN LÝ ---
+
+    @Column(columnDefinition = "TEXT")
+    private String address; // Địa chỉ (cho các đơn hàng giao đi)
+
+    private LocalDate dateOfBirth; // Ngày sinh (để gửi ưu đãi)
+
+    @Column(columnDefinition = "TEXT")
+    private String notes; // Ghi chú (ví dụ: "Khách VIP", "Dị ứng hải sản")
+
+    private int loyaltyPoints; // Điểm tích lũy (nếu có)
+
+    // --- CÁC QUAN HỆ ---
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Reservation> reservations;
 
-    // Một khách hàng có thể có nhiều đơn hàng
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Order> orders;
 }
