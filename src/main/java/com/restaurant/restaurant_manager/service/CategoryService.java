@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.category.CategoryRequest;
+import com.restaurant.restaurant_manager.dto.category.CategoryResponse;
 import com.restaurant.restaurant_manager.entity.Category;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.CategoryRepository;
@@ -9,14 +10,17 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+    public List<CategoryResponse> getAllCategories() {
+        return categoryRepository.findAll().stream()
+                .map(CategoryResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     public Category getCategoryById(UUID id) {

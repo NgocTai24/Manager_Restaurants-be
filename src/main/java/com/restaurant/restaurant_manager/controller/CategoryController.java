@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.category.CategoryRequest;
+import com.restaurant.restaurant_manager.dto.category.CategoryResponse;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
 import com.restaurant.restaurant_manager.entity.Category;
 import com.restaurant.restaurant_manager.service.CategoryService;
@@ -14,27 +15,27 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin/categories")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
 
-    @PostMapping
+    @PostMapping("/admin/categories")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> createCategory(@Valid @RequestBody CategoryRequest request) {
         Category newCategory = categoryService.createCategory(request);
         return ApiResponse.created(newCategory, "Category created successfully");
     }
 
-    @GetMapping
-    @PreAuthorize("permitAll()") // Cho phép cả public (nếu cần)
-    public ResponseEntity<ApiResponse<List<Category>>> getAllCategories() {
-        List<Category> categories = categoryService.getAllCategories();
+    @GetMapping("/public/categories")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
+        List<CategoryResponse> categories = categoryService.getAllCategories();
         return ApiResponse.success(categories, "Categories retrieved successfully");
     }
 
-    @PutMapping("/{id}")
+
+    @PutMapping("/admin/categories/{id}")
     public ResponseEntity<ApiResponse<Category>> updateCategory(
             @PathVariable UUID id,
             @Valid @RequestBody CategoryRequest request
@@ -43,7 +44,7 @@ public class CategoryController {
         return ApiResponse.success(updatedCategory, "Category updated successfully");
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/categories/{id}")
     public ResponseEntity<ApiResponse<Object>> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
         return ApiResponse.success(null, "Category deleted successfully");
