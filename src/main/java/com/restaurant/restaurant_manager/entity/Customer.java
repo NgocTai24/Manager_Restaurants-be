@@ -27,25 +27,28 @@ public class Customer {
     private String name;
 
     @Column(nullable = false, unique = true)
-    private String phone; // Đây là "khóa chính" nghiệp vụ
+    private String phone;
 
     @Column(unique = true)
     private String email;
 
-    // --- CÁC TRƯỜNG BỔ SUNG ĐỂ QUẢN LÝ ---
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    private LocalDate dateOfBirth;
 
     @Column(columnDefinition = "TEXT")
-    private String address; // Địa chỉ (cho các đơn hàng giao đi)
+    private String notes;
 
-    private LocalDate dateOfBirth; // Ngày sinh (để gửi ưu đãi)
+    private int loyaltyPoints;
 
-    @Column(columnDefinition = "TEXT")
-    private String notes; // Ghi chú (ví dụ: "Khách VIP", "Dị ứng hải sản")
-
-    private int loyaltyPoints; // Điểm tích lũy (nếu có)
+    // --- MỚI THÊM: LIÊN KẾT VỚI USER ---
+    // Một Customer có thể gắn với 1 User (hoặc không - nếu là khách vãng lai)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true)
+    private User user;
 
     // --- CÁC QUAN HỆ ---
-
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Reservation> reservations = new HashSet<>();
 

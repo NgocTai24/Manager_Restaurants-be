@@ -29,7 +29,7 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
-    private String imageUrl; // Link ảnh từ Cloudinary
+    private String imageUrl;
 
     // Nhiều sản phẩm thuộc về một danh mục
     @ManyToOne(fetch = FetchType.LAZY)

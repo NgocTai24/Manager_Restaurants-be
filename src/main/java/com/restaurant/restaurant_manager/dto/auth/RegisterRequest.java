@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.dto.auth;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -20,6 +21,9 @@ public class RegisterRequest {
 
     @NotEmpty(message = "Full name is required")
     private String fullName;
+
+    @NotBlank(message = "Phone number is required")
+    private String phone;
 
     // Các trường này có thể không bắt buộc (nullable)
     private LocalDate dateOfBirth;

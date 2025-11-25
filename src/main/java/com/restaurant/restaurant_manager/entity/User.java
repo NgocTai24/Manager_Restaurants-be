@@ -68,8 +68,6 @@ public class User implements UserDetails { // <-- THÊM "implements UserDetails"
 
     @Override
     public String getUsername() {
-        // Spring Security gọi hàm này để lấy "username"
-        // Chúng ta trả về email vì ta đăng nhập bằng email
         return this.email;
     }
 

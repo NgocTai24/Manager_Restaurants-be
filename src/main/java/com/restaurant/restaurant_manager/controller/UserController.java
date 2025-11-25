@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
 import com.restaurant.restaurant_manager.dto.user.ChangePasswordRequest;
+import com.restaurant.restaurant_manager.dto.user.CreateInternalUserRequest; // Import DTO mới
 import com.restaurant.restaurant_manager.dto.user.UpdateUserRequest;
 import com.restaurant.restaurant_manager.dto.user.UserResponse;
 import com.restaurant.restaurant_manager.service.UserService;
@@ -17,7 +18,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1")  // ✅ Base path chung
 @RequiredArgsConstructor
-// ❌ BỎ @PreAuthorize ở class level
 public class UserController {
 
     private final UserService userService;
@@ -66,6 +66,19 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
         UserResponse user = userService.getUserById(id);
         return ApiResponse.success(user, "User retrieved successfully");
+    }
+
+    /**
+     * Tạo user nội bộ mới (Admin tạo Staff/Admin)
+     * POST /api/v1/admin/users/internal
+     */
+    @PostMapping("/admin/users/internal")
+    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    public ResponseEntity<ApiResponse<UserResponse>> createInternalUser(
+            @Valid @RequestBody CreateInternalUserRequest request
+    ) {
+        UserResponse newUser = userService.createInternalUser(request);
+        return ApiResponse.created(newUser, "Internal user created successfully");
     }
 
     /**

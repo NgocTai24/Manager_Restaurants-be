@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.user.ChangePasswordRequest;
+import com.restaurant.restaurant_manager.dto.user.CreateInternalUserRequest; // Import DTO mới
 import com.restaurant.restaurant_manager.entity.User;
 import com.restaurant.restaurant_manager.exception.BadRequestException;
 import com.restaurant.restaurant_manager.repository.UserRepository;
@@ -54,7 +55,7 @@ public class UserService {
     }
 
     // --- ADMIN: Lấy tất cả users ---
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::convertToResponse)
@@ -93,6 +94,24 @@ public class UserService {
             throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
+    }
+
+    // --- ADMIN: Tạo user nội bộ (Staff/Admin) ---
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse createInternalUser(CreateInternalUserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email already exists");
+        }
+
+        User user = new User();
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(request.getRole()); // Role do Admin chọn (STAFF/ADMIN)
+        // Các trường khác có thể để null hoặc set mặc định nếu cần
+
+        // Chỉ lưu User, không tạo Customer -> Logic đúng như yêu cầu
+        return convertToResponse(userRepository.save(user));
     }
 
     // --- Helper: Chuyển Entity sang DTO Response ---
