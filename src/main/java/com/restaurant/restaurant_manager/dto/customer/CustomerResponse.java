@@ -18,6 +18,7 @@ public class CustomerResponse {
     private LocalDate dateOfBirth;
     private String notes;
     private int loyaltyPoints;
+    private UUID userId; // Để biết khách này đã liên kết tài khoản User chưa
 
     public static CustomerResponse fromEntity(Customer customer) {
         return CustomerResponse.builder()
@@ -29,6 +30,7 @@ public class CustomerResponse {
                 .dateOfBirth(customer.getDateOfBirth())
                 .notes(customer.getNotes())
                 .loyaltyPoints(customer.getLoyaltyPoints())
+                .userId(customer.getUser() != null ? customer.getUser().getId() : null)
                 .build();
     }
 }

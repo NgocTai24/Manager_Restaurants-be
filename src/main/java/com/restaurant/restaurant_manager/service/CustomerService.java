@@ -6,9 +6,9 @@ import com.restaurant.restaurant_manager.entity.Customer;
 import com.restaurant.restaurant_manager.exception.BadRequestException;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.CustomerRepository;
-import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,15 +22,11 @@ public class CustomerService {
 
     @Transactional
     public Customer findOrCreateCustomer(String phone, String name, String email, String address) {
-        // Tìm theo phone trước
         return customerRepository.findByPhone(phone)
                 .orElseGet(() -> {
-                    // ✅ Kiểm tra email đã tồn tại chưa
-                    if (email != null && customerRepository.findByEmail(email).isPresent()) {
+                    if (email != null && !email.isEmpty() && customerRepository.findByEmail(email).isPresent()) {
                         throw new BadRequestException("Email already exists: " + email);
                     }
-
-                    // Tạo mới
                     Customer newCustomer = new Customer();
                     newCustomer.setPhone(phone);
                     newCustomer.setName(name);
@@ -40,33 +36,40 @@ public class CustomerService {
                 });
     }
 
-    /**
-     * [ADMIN] Lấy tất cả khách hàng
-     */
+    // --- ADMIN/STAFF: Lấy tất cả khách hàng ---
     public List<CustomerResponse> getAllCustomers() {
         return customerRepository.findAll().stream()
                 .map(CustomerResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    /**
-     * [ADMIN] Lấy chi tiết khách hàng
-     */
+    // --- ADMIN/STAFF: Tìm kiếm khách hàng (Quan trọng cho Staff) ---
+    public List<CustomerResponse> searchCustomers(String keyword) {
+        // Giả sử Repository chưa có hàm search, bạn cần thêm vào Repository hoặc dùng stream filter (tạm thời)
+        // Tốt nhất là thêm: List<Customer> findByNameContainingOrPhoneContaining(String name, String phone); vào Repo
+
+        // Cách dùng Stream (tạm thời nếu chưa sửa Repo):
+        return customerRepository.findAll().stream()
+                .filter(c -> c.getName().toLowerCase().contains(keyword.toLowerCase()) ||
+                        c.getPhone().contains(keyword))
+                .map(CustomerResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // --- ADMIN: Lấy chi tiết ---
     public CustomerResponse getCustomerById(UUID id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         return CustomerResponse.fromEntity(customer);
     }
 
-    /**
-     * [ADMIN] Cập nhật khách hàng
-     */
+    // --- ADMIN: Cập nhật ---
     @Transactional
     public CustomerResponse updateCustomer(UUID id, UpdateCustomerRequest request) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
-        // Kiểm tra email nếu email bị thay đổi
+        // Check trùng email nếu thay đổi
         if (request.getEmail() != null && !request.getEmail().isEmpty() &&
                 !request.getEmail().equals(customer.getEmail())) {
             if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -85,21 +88,18 @@ public class CustomerService {
         return CustomerResponse.fromEntity(updatedCustomer);
     }
 
-    /**
-     * [ADMIN] Xóa khách hàng
-     */
+    // --- ADMIN: Xóa ---
     public void deleteCustomer(UUID id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
-        // (Kiểm tra logic nghiệp vụ, ví dụ: không cho xóa nếu có đơn hàng)
-        // Lưu ý: Cần kiểm tra @Data trên Customer và Order/Reservation
-        // để đảm bảo không bị lỗi LazyInitializationException
+        // Chặn xóa nếu đã có đơn hàng để bảo toàn dữ liệu báo cáo
+        if (!customer.getOrders().isEmpty()) {
+            throw new BadRequestException("Cannot delete customer who has existing orders. Please deactivate instead.");
+        }
 
-        // Tạm thời comment logic kiểm tra phức tạp
-        // if (!customer.getOrders().isEmpty() || !customer.getReservations().isEmpty()) {
-        //     throw new BadRequestException("Cannot delete customer with existing orders or reservations.");
-        // }
+        // Nếu customer có User liên kết, có thể cần xử lý ngắt liên kết trước (tùy nghiệp vụ)
+        // Ở đây ta xóa Customer, User vẫn còn nhưng field user.customer sẽ null (nếu mapping đúng)
 
         customerRepository.delete(customer);
     }

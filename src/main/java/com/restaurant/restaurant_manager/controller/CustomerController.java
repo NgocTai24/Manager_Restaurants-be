@@ -14,40 +14,41 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1") // Base path chung
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class CustomerController {
 
     private final CustomerService customerService;
 
-    /**
-     * API Lấy tất cả khách hàng
-     * GET /api/v1/admin/customers
-     */
-    @GetMapping("/admin/customers")
-    @PreAuthorize("hasRole('ADMIN')")
+    // --- 1. Lấy tất cả (Dành cho Admin/Staff) ---
+    @GetMapping("/staff/customers")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<CustomerResponse>>> getAllCustomers() {
         List<CustomerResponse> customers = customerService.getAllCustomers();
         return ApiResponse.success(customers, "Customers retrieved successfully");
     }
 
-    /**
-     * API Lấy chi tiết khách hàng
-     * GET /api/v1/admin/customers/{id}
-     */
-    @GetMapping("/admin/customers/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    // --- 2. Tìm kiếm (Quan trọng: Tìm theo SĐT/Tên) ---
+    @GetMapping("/staff/customers/search")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<CustomerResponse>>> searchCustomers(
+            @RequestParam String keyword
+    ) {
+        List<CustomerResponse> customers = customerService.searchCustomers(keyword);
+        return ApiResponse.success(customers, "Search results");
+    }
+
+    // --- 3. Lấy chi tiết ---
+    @GetMapping("/staff/customers/{id}")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(@PathVariable UUID id) {
         CustomerResponse customer = customerService.getCustomerById(id);
         return ApiResponse.success(customer, "Customer retrieved successfully");
     }
 
-    /**
-     * API Cập nhật khách hàng
-     * PUT /api/v1/admin/customers/{id}
-     */
-    @PutMapping("/admin/customers/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    // --- 4. Cập nhật (Chỉ Admin hoặc Staff quản lý) ---
+    @PutMapping("/staff/customers/{id}") // Staff có thể sửa thông tin cơ bản
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<CustomerResponse>> updateCustomer(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateCustomerRequest request
@@ -56,10 +57,7 @@ public class CustomerController {
         return ApiResponse.success(updatedCustomer, "Customer updated successfully");
     }
 
-    /**
-     * API Xóa khách hàng
-     * DELETE /api/v1/admin/customers/{id}
-     */
+    // --- 5. Xóa (Chỉ ADMIN) ---
     @DeleteMapping("/admin/customers/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> deleteCustomer(@PathVariable UUID id) {

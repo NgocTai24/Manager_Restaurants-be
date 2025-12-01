@@ -1,21 +1,17 @@
 package com.restaurant.restaurant_manager.dto.customer;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+
 import java.time.LocalDate;
 
-/**
- * DTO Admin dùng để cập nhật thông tin Customer.
- * SĐT (phone) thường là khóa chính logic, nên chúng ta không cho đổi ở đây.
- */
 @Data
 public class UpdateCustomerRequest {
-
-    @NotEmpty(message = "Customer name is required")
+    @NotBlank(message = "Name is required")
     private String name;
 
-    @Email
+    @Email(message = "Invalid email format")
     private String email;
 
     private String address;
