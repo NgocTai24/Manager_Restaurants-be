@@ -2,13 +2,9 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.order.CreateOrderRequest;
 import com.restaurant.restaurant_manager.dto.order.OrderResponse;
-import com.restaurant.restaurant_manager.entity.Customer;
-import com.restaurant.restaurant_manager.entity.Order;
-import com.restaurant.restaurant_manager.entity.OrderItem;
-import com.restaurant.restaurant_manager.entity.Product;
+import com.restaurant.restaurant_manager.entity.*;
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
-import com.restaurant.restaurant_manager.repository.OrderItemRepository;
 import com.restaurant.restaurant_manager.repository.OrderRepository;
 import com.restaurant.restaurant_manager.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +12,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,80 +23,76 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
 
     @Transactional
-    public Order createOrder(Customer customer, List<CreateOrderRequest.OrderItemInfo> itemInfos) {
-
+    public Order createOrder(Customer customer, List<CreateOrderRequest.OrderItemRequest> itemsRequest, String note) {
         // 1. Lấy danh sách Product ID
-        List<UUID> productIds = itemInfos.stream()
-                .map(CreateOrderRequest.OrderItemInfo::getProductId)
+        List<UUID> productIds = itemsRequest.stream()
+                .map(CreateOrderRequest.OrderItemRequest::getProductId)
                 .collect(Collectors.toList());
 
-        // 2. Lấy tất cả Product từ DB chỉ bằng một query
         Map<UUID, Product> productMap = productRepository.findAllById(productIds).stream()
-                .collect(Collectors.toMap(Product::getId, product -> product));
+                .collect(Collectors.toMap(Product::getId, p -> p));
 
-        // 3. Tính toán tổng tiền
-        double totalAmount = 0.0;
-        Set<OrderItem> orderItems = new HashSet<>();
-
-        for (CreateOrderRequest.OrderItemInfo itemInfo : itemInfos) {
-            Product product = productMap.get(itemInfo.getProductId());
-            if (product == null) {
-                throw new ResourceNotFoundException("Product not found with id: " + itemInfo.getProductId());
-            }
-
-            totalAmount += (product.getPrice() * itemInfo.getQuantity());
-
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(product);
-            orderItem.setQuantity(itemInfo.getQuantity());
-            orderItem.setPriceAtPurchase(product.getPrice());
-            orderItems.add(orderItem);
-        }
-
-        // 4. Tạo và Lưu Order
+        // 2. Tạo Order Entity
         Order order = new Order();
         order.setCustomer(customer);
         order.setOrderTime(LocalDateTime.now());
-        order.setTotalAmount(totalAmount);
         order.setStatus(OrderStatus.PENDING);
+        order.setNote(note);
 
-        Order savedOrder = orderRepository.save(order);
+        double totalAmount = 0.0;
+        List<OrderItem> orderItems = new ArrayList<>();
 
-        // 5. Gán Order vào OrderItems và Lưu
-        for (OrderItem item : orderItems) {
-            item.setOrder(savedOrder);
+        // 3. Xử lý từng item
+        for (CreateOrderRequest.OrderItemRequest itemReq : itemsRequest) {
+            Product product = productMap.get(itemReq.getProductId());
+            if (product == null) {
+                throw new ResourceNotFoundException("Product not found with id: " + itemReq.getProductId());
+            }
+
+            // Kiểm tra tồn kho (nếu có logic kho)
+            // if (product.getStock() < itemReq.getQuantity()) throw ...
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(itemReq.getQuantity());
+            orderItem.setPriceAtPurchase(product.getPrice());
+
+            totalAmount += (product.getPrice() * itemReq.getQuantity());
+            orderItems.add(orderItem);
         }
-        orderItemRepository.saveAll(orderItems);
 
-        // ✅ 6. LOAD LẠI ORDER VỚI OrderItems (QUAN TRỌNG!)
-        // Cách 1: findById với JOIN FETCH
-        return orderRepository.findByIdWithItems(savedOrder.getId())
-                .orElseGet(() -> {
-                    // Fallback: Load lại thủ công
-                    Order reloadedOrder = orderRepository.findById(savedOrder.getId()).get();
-                    reloadedOrder.setOrderItems(orderItems); // Set manually
-                    return reloadedOrder;
-                });
+        order.setTotalAmount(totalAmount);
+        order.setOrderItems(orderItems);
+
+        // 4. Lưu tất cả (Cascade.ALL sẽ lưu cả OrderItems)
+        return orderRepository.save(order);
     }
 
-    // --- Các API cho Admin ---
-
+    // Lấy danh sách order (Admin)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
                 .map(OrderResponse::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    public OrderResponse updateOrderStatus(UUID orderId, OrderStatus status) {
+    @Transactional
+    public Order updateStatus(UUID orderId, OrderStatus newStatus) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        order.setStatus(status);
-        Order updatedOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updatedOrder);
+        // (Optional) Logic kiểm tra luồng trạng thái
+        // if (order.getStatus() == OrderStatus.CANCELLED) { ... }
+
+        order.setStatus(newStatus);
+        return orderRepository.save(order);
+    }
+
+    public Order findOrderById(UUID id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
     }
 }

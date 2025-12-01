@@ -2,18 +2,15 @@ package com.restaurant.restaurant_manager.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItem {
@@ -29,12 +26,10 @@ public class OrderItem {
     @Column(nullable = false)
     private Double priceAtPurchase; // Lưu lại giá tại thời điểm mua
 
-    // Nhiều chi tiết đơn hàng thuộc về một đơn hàng
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    // Nhiều chi tiết đơn hàng trỏ đến một sản phẩm
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;

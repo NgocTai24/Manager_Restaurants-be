@@ -1,49 +1,44 @@
 package com.restaurant.restaurant_manager.dto.order;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
 import java.util.UUID;
 
-
 @Data
 public class CreateOrderRequest {
 
-    @Valid // Kiểm tra các thuộc tính bên trong CustomerInfo
-    @NotNull
-    private CustomerInfo customer;
+    // Thông tin khách hàng (Chỉ dùng cho Guest/Staff đặt hộ)
+    // Nếu là User đăng nhập thì trường này có thể null
+    private CustomerInfo customerInfo;
 
+    // Danh sách món ăn
+    @NotEmpty(message = "Order items cannot be empty")
     @Valid
-    @NotEmpty(message = "Order must have at least one item")
-    private List<OrderItemInfo> items;
+    private List<OrderItemRequest> items;
 
-    // Inner class cho thông tin khách hàng
+    private String note;
+
     @Data
     public static class CustomerInfo {
-        @NotEmpty(message = "Customer name is required")
-        private String name;
-
-        @NotEmpty(message = "Customer phone is required")
+        @NotNull(message = "Phone is required")
         private String phone;
-
-        @Email(message = "Invalid email format")
-        private String email;
-
+        @NotNull(message = "Name is required")
+        private String name;
         private String address;
+        private String email;
     }
 
-    // Inner class cho thông tin món hàng
     @Data
-    public static class OrderItemInfo {
+    public static class OrderItemRequest {
         @NotNull(message = "Product ID is required")
         private UUID productId;
 
-        @NotNull(message = "Quantity is required")
+        @Min(value = 1, message = "Quantity must be at least 1")
         private int quantity;
     }
 }

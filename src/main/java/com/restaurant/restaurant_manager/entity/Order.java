@@ -1,4 +1,3 @@
-
 package com.restaurant.restaurant_manager.entity;
 
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
@@ -9,8 +8,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -35,12 +34,15 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
+    @Column(columnDefinition = "TEXT")
+    private String note; // Ghi chú đơn hàng
+
     // Nhiều đơn hàng thuộc về một khách hàng
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     // Một đơn hàng có nhiều chi tiết đơn hàng (món ăn)
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<OrderItem> orderItems = new HashSet<>();
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems = new ArrayList<>();
 }

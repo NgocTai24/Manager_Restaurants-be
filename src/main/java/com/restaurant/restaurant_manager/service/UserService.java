@@ -107,7 +107,7 @@ public class UserService {
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(request.getRole()); // Role do Admin chọn (STAFF/ADMIN)
+        user.setRole(request.getRole());
         // Các trường khác có thể để null hoặc set mặc định nếu cần
 
         // Chỉ lưu User, không tạo Customer -> Logic đúng như yêu cầu

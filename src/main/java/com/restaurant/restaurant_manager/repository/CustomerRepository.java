@@ -11,4 +11,7 @@ import java.util.UUID;
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     Optional<Customer> findByPhone(String phone);
     Optional<Customer> findByEmail(String email);
+
+    // Tìm Customer dựa trên user_id (Dùng cho luồng Authenticated User)
+    Optional<Customer> findByUserId(UUID userId);
 }

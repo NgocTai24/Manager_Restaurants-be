@@ -21,5 +21,5 @@ public class CreateInternalUserRequest {
     private String password;
 
     @NotNull(message = "Role is required")
-    private UserRole role; // STAFF hoặc ADMIN
+    private UserRole role;
 }
