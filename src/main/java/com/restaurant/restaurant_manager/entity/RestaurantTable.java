@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tables") //
+@Table(name = "tables")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,15 +24,17 @@ public class RestaurantTable {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String name; // Ví dụ: Bàn 01, VIP 02
 
     @Column(nullable = false)
-    private int capacity;
+    private int capacity; // Số ghế: 2, 4, 6, 10
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TableStatus status;
+    private TableStatus status; // AVAILABLE, OCCUPIED, RESERVED (Trạng thái hiện tại)
 
-    @OneToMany(mappedBy = "table", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private String description; // Ví dụ: "Gần cửa sổ", "Phòng lạnh"
+
+    @OneToMany(mappedBy = "table", fetch = FetchType.LAZY)
     private Set<Reservation> reservations = new HashSet<>();
 }
