@@ -2,7 +2,7 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
 import com.restaurant.restaurant_manager.dto.user.ChangePasswordRequest;
-import com.restaurant.restaurant_manager.dto.user.CreateInternalUserRequest; // Import DTO mới
+import com.restaurant.restaurant_manager.dto.user.CreateInternalUserRequest;
 import com.restaurant.restaurant_manager.dto.user.UpdateUserRequest;
 import com.restaurant.restaurant_manager.dto.user.UserResponse;
 import com.restaurant.restaurant_manager.service.UserService;
@@ -16,18 +16,29 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1")  // ✅ Base path chung
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
+    // --- USER PROFILE APIs ---
+
     /**
-     * API Đổi mật khẩu (cho user đã đăng nhập)
-     * POST /api/v1/user/change-password
+     * User tự cập nhật thông tin cá nhân
+     * PUT /api/v1/user/info
      */
+    @PutMapping("/user/info")
+    @PreAuthorize("isAuthenticated()") // Bất kỳ ai đăng nhập đều được
+    public ResponseEntity<ApiResponse<UserResponse>> updateMyProfile(
+            @Valid @RequestBody UpdateUserRequest request
+    ) {
+        UserResponse updatedUser = userService.updateMyProfile(request);
+        return ApiResponse.success(updatedUser, "Profile updated successfully");
+    }
+
     @PostMapping("/user/change-password")
-    @PreAuthorize("isAuthenticated()") // ✅ Chỉ cần đăng nhập
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Object>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request
     ) {
@@ -35,72 +46,49 @@ public class UserController {
         return ApiResponse.success(null, "Password changed successfully");
     }
 
-    /**
-     * API Đăng xuất
-     * POST /api/v1/user/logout
-     */
     @PostMapping("/user/logout")
-    @PreAuthorize("isAuthenticated()") // ✅ Chỉ cần đăng nhập
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Object>> logout() {
         userService.logout();
         return ApiResponse.success(null, "Logged out successfully");
     }
 
-    /**
-     * Lấy danh sách tất cả users
-     * GET /api/v1/admin/users
-     */
+    // --- ADMIN APIs ---
+
     @GetMapping("/admin/users")
-    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-        List<UserResponse> users = userService.getAllUsers();
-        return ApiResponse.success(users, "Users retrieved successfully");
+        return ApiResponse.success(userService.getAllUsers(), "Users retrieved successfully");
     }
 
-    /**
-     * Lấy chi tiết user theo ID
-     * GET /api/v1/admin/users/{id}
-     */
     @GetMapping("/admin/users/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
-        UserResponse user = userService.getUserById(id);
-        return ApiResponse.success(user, "User retrieved successfully");
+        return ApiResponse.success(userService.getUserById(id), "User retrieved successfully");
     }
 
-    /**
-     * Tạo user nội bộ mới (Admin tạo Staff/Admin)
-     * POST /api/v1/admin/users/internal
-     */
     @PostMapping("/admin/users/internal")
-    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> createInternalUser(
             @Valid @RequestBody CreateInternalUserRequest request
     ) {
-        UserResponse newUser = userService.createInternalUser(request);
-        return ApiResponse.created(newUser, "Internal user created successfully");
+        return ApiResponse.created(userService.createInternalUser(request), "Internal user created successfully");
     }
 
     /**
-     * Cập nhật user
-     * PUT /api/v1/admin/users/{id}
+     * Admin cập nhật thông tin user khác (Có thể đổi Role)
      */
     @PutMapping("/admin/users/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserRequest request
     ) {
-        UserResponse updatedUser = userService.updateUser(id, request);
-        return ApiResponse.success(updatedUser, "User updated successfully");
+        return ApiResponse.success(userService.updateUser(id, request), "User updated successfully");
     }
 
-    /**
-     * Xóa user
-     * DELETE /api/v1/admin/users/{id}
-     */
     @DeleteMapping("/admin/users/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // ✅ Bắt buộc ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ApiResponse.success(null, "User deleted successfully");

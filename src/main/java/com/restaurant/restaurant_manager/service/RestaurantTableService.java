@@ -25,8 +25,7 @@ public class RestaurantTableService {
     // --- CREATE ---
     @Transactional
     public TableResponse createTable(CreateTableRequest request) {
-        // Kiểm tra trùng tên bàn
-        // (Lưu ý: Bạn cần thêm method boolean existsByName(String name) vào Repository nếu chưa có)
+        // Kiểm tra trùng tên bàn (Optional)
         // if (tableRepository.existsByName(request.getName())) {
         //     throw new BadRequestException("Table name already exists");
         // }
@@ -54,7 +53,7 @@ public class RestaurantTableService {
         return TableResponse.fromEntity(table);
     }
 
-    // --- UPDATE ---
+    // --- UPDATE INFO (ADMIN) ---
     @Transactional
     public TableResponse updateTable(UUID id, UpdateTableRequest request) {
         RestaurantTable table = tableRepository.findById(id)
@@ -64,6 +63,17 @@ public class RestaurantTableService {
         if (request.getCapacity() != null) table.setCapacity(request.getCapacity());
         if (request.getDescription() != null) table.setDescription(request.getDescription());
         if (request.getStatus() != null) table.setStatus(request.getStatus());
+
+        return TableResponse.fromEntity(tableRepository.save(table));
+    }
+
+    // --- NEW: UPDATE STATUS ONLY (STAFF/ADMIN) ---
+    @Transactional
+    public TableResponse updateTableStatus(UUID id, TableStatus status) {
+        RestaurantTable table = tableRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
+
+        table.setStatus(status);
 
         return TableResponse.fromEntity(tableRepository.save(table));
     }
