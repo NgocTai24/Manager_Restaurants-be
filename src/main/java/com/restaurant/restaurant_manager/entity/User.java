@@ -23,7 +23,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails { // <-- THÊM "implements UserDetails"
+public class User implements UserDetails {
 
     @Id
     @UuidGenerator
@@ -47,7 +47,7 @@ public class User implements UserDetails { // <-- THÊM "implements UserDetails"
     @Column(nullable = false)
     private UserRole role;
 
-    @Column(columnDefinition = "TEXT") // Dùng TEXT để lưu token dài
+    @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
     private LocalDateTime refreshTokenExpiry;
@@ -57,7 +57,7 @@ public class User implements UserDetails { // <-- THÊM "implements UserDetails"
     private LocalDateTime resetPasswordTokenExpiry;
 
     @OneToMany(mappedBy = "author", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Article> articles;
+    private Set<News> newsList;
 
     // ----- CÁC HÀM CỦA UserDetails -----
 

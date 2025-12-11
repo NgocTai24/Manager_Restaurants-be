@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "articles")
+@Table(name = "news")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Article {
+public class News {
 
     @Id
     @UuidGenerator
@@ -32,8 +32,21 @@ public class Article {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    // Nhiều bài báo được viết bởi một User (tác giả)
+    private LocalDateTime updatedAt;
+
+    // Nhiều tin tức được viết bởi một User (Admin/Staff)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
