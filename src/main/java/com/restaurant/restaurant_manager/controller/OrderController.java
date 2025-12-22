@@ -75,6 +75,19 @@ public class OrderController {
     }
 
     /**
+     * Lấy chi tiết đơn hàng
+     * GET /api/v1/staff/orders/{id}
+     */
+    @GetMapping("/staff/orders/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')") // Chỉ Admin hoặc Staff mới xem được
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrderById(@PathVariable UUID id) {
+
+        OrderResponse response = orderFacade.getOrderById(id);
+
+        return ApiResponse.success(response, "Order details retrieved successfully");
+    }
+
+    /**
      * API 5: ADMIN Cập nhật trạng thái đơn hàng
      * PUT /api/v1/admin/orders/{id}/status?status=CONFIRMED
      */

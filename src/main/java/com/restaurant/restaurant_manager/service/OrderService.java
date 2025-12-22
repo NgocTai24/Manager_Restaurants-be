@@ -4,6 +4,7 @@ import com.restaurant.restaurant_manager.dto.order.CreateOrderRequest;
 import com.restaurant.restaurant_manager.dto.order.OrderResponse;
 import com.restaurant.restaurant_manager.entity.*;
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
+import com.restaurant.restaurant_manager.entity.enums.PaymentMethod;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.OrderRepository;
 import com.restaurant.restaurant_manager.repository.ProductRepository;
@@ -26,7 +27,7 @@ public class OrderService {
     private final ProductRepository productRepository;
 
     @Transactional
-    public Order createOrder(Customer customer, List<CreateOrderRequest.OrderItemRequest> itemsRequest, String note) {
+    public Order createOrder(Customer customer, List<CreateOrderRequest.OrderItemRequest> itemsRequest, String note, PaymentMethod paymentMethod) {
         // 1. Lấy danh sách Product ID
         List<UUID> productIds = itemsRequest.stream()
                 .map(CreateOrderRequest.OrderItemRequest::getProductId)
@@ -41,6 +42,7 @@ public class OrderService {
         order.setOrderTime(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setNote(note);
+        order.setPaymentMethod(paymentMethod); // ✅ BÂY GIỜ KHÔNG LỖI NỮA
 
         double totalAmount = 0.0;
         List<OrderItem> orderItems = new ArrayList<>();
@@ -51,9 +53,6 @@ public class OrderService {
             if (product == null) {
                 throw new ResourceNotFoundException("Product not found with id: " + itemReq.getProductId());
             }
-
-            // Kiểm tra tồn kho (nếu có logic kho)
-            // if (product.getStock() < itemReq.getQuantity()) throw ...
 
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
@@ -68,7 +67,7 @@ public class OrderService {
         order.setTotalAmount(totalAmount);
         order.setOrderItems(orderItems);
 
-        // 4. Lưu tất cả (Cascade.ALL sẽ lưu cả OrderItems)
+        // 4. Lưu tất cả
         return orderRepository.save(order);
     }
 

@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.entity;
 
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
+import com.restaurant.restaurant_manager.entity.enums.PaymentMethod;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,14 +36,19 @@ public class Order {
     private OrderStatus status;
 
     @Column(columnDefinition = "TEXT")
-    private String note; // Ghi chú đơn hàng
+    private String note;
 
-    // Nhiều đơn hàng thuộc về một khách hàng
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethod paymentMethod = PaymentMethod.COD;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    // Một đơn hàng có nhiều chi tiết đơn hàng (món ăn)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Payment payment;
 }

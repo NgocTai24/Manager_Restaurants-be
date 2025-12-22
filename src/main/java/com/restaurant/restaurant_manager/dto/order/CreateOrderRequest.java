@@ -1,5 +1,6 @@
 package com.restaurant.restaurant_manager.dto.order;
 
+import com.restaurant.restaurant_manager.entity.enums.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -32,6 +33,10 @@ public class CreateOrderRequest {
         private String address;
         private String email;
     }
+
+    @NotNull(message = "Payment method is required")
+    private PaymentMethod paymentMethod = PaymentMethod.COD;
+
 
     @Data
     public static class OrderItemRequest {

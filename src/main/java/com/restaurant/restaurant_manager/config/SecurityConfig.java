@@ -31,6 +31,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // 1. Tắt CSRF (vì dùng JWT, không dùng session/cookie)
                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -39,8 +40,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
 
+
                 // 3. Cấu hình phân quyền (Authorization)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/payments/webhook").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**", // <-- Đã bao gồm /register, /login, /refresh, /forgot-password ...
                                 "/api/v1/public/**",
@@ -49,13 +52,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-
+                        .requestMatchers("/api/v1/payments/order/**").hasAnyRole("ADMIN", "STAFF", "CUSTOMER")
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/staff/**").hasAnyRole("ADMIN", "STAFF")
-
-                        // --- THÊM DÒNG NÀY ---
-                        // Tất cả API trong /api/v1/user/ (như change-password, logout)
-                        // Yêu cầu phải đăng nhập (vai trò bất kỳ)
                         .requestMatchers("/api/v1/user/**").authenticated()
 
                         .anyRequest().authenticated()
