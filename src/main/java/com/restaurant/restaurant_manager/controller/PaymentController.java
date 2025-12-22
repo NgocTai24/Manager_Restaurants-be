@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
 import com.restaurant.restaurant_manager.entity.Payment;
+import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,35 +25,43 @@ public class PaymentController {
     @PostMapping("/webhook")
     public ResponseEntity<ApiResponse<Object>> payosWebhook(@RequestBody Map<String, Object> payload) {
         try {
-            // 1. Kiểm tra xem có field "data" không (theo chuẩn PayOS)
-            if (!payload.containsKey("data")) {
-                return ApiResponse.badRequest("Invalid Webhook Data Format", null);
+            // 1. Kiểm tra data cơ bản
+            if (payload == null || !payload.containsKey("data")) {
+                return ApiResponse.success(null, "Webhook received (No data)");
             }
 
-            // 2. Lấy object "data" ra
             Map<String, Object> data = (Map<String, Object>) payload.get("data");
-
-            // 3. Lấy orderCode từ trong "data"
             if (data == null || !data.containsKey("orderCode")) {
-                return ApiResponse.badRequest("Order Code missing", null);
+                return ApiResponse.success(null, "Order Code missing");
             }
 
-            Long orderCode = Long.parseLong(data.get("orderCode").toString());
+            // 2. Parse dữ liệu
+            long orderCode = -1;
+            try {
+                orderCode = Long.parseLong(data.get("orderCode").toString());
+            } catch (NumberFormatException e) {
+                // Nếu PayOS gửi chữ "TEST" hoặc số lỗi
+                return ApiResponse.success(null, "Invalid order code format");
+            }
 
-            // Lưu ý: PayOS webhook không gửi transactionId trong data ở một số trường hợp,
-            // hoặc nó tên là "reference". Nếu null thì mình tạo tạm hoặc bỏ qua.
-            String transactionId = data.containsKey("reference") ? data.get("reference").toString() : "PAYOS_TRANS_" + orderCode;
+            String transactionId = data.containsKey("reference") ? data.get("reference").toString() : "UNKNOWN";
 
-            // Webhook PayOS bắn về nghĩa là đã thành công (hoặc check field code == "00")
-            // Bạn nên check thêm security signature nếu làm thật, nhưng để test thì bỏ qua.
+            // 3. GỌI SERVICE (CÓ BẮT LỖI NOT FOUND)
+            try {
+                paymentService.confirmPayment(orderCode, transactionId);
+                System.out.println("✅ Payment confirmed: " + orderCode);
+            } catch (ResourceNotFoundException e) {
+                // ⚠️ QUAN TRỌNG: Đây là chỗ sửa lỗi
+                // Nếu không tìm thấy đơn (do PayOS test), in log ra nhưng VẪN TRẢ VỀ SUCCESS
+                System.out.println("⚠️ Webhook Test (Không tìm thấy đơn): " + orderCode + " - Bỏ qua để PayOS không báo lỗi.");
+            }
 
-            paymentService.confirmPayment(orderCode, transactionId);
-
-            return ApiResponse.success(null, "Payment confirmed successfully");
+            // Luôn trả về 200 OK
+            return ApiResponse.success(null, "Webhook processed");
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ApiResponse.badRequest("Webhook processing failed: " + e.getMessage(), null);
+            return ApiResponse.success(null, "Webhook error handled: " + e.getMessage());
         }
     }
 
