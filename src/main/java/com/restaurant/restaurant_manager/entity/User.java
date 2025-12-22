@@ -50,6 +50,9 @@ public class User implements UserDetails {
     @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
+    @Column(columnDefinition = "TEXT")
+    private String avatar;
+
     private LocalDateTime refreshTokenExpiry;
 
     private String resetPasswordToken;

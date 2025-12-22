@@ -13,7 +13,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IStorageService storageService;
 
     // Lấy user đang đăng nhập từ Security Context
     private User getAuthenticatedUser() {
@@ -64,30 +67,54 @@ public class UserService {
 
     // --- ADMIN: Cập nhật user bất kỳ (Theo ID) ---
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse updateUser(UUID id, UpdateUserRequest request) {
+    public UserResponse updateUser(UUID id, UpdateUserRequest request, MultipartFile file) throws IOException {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        // Admin có quyền sửa Role
+        // 1. Xử lý upload ảnh nếu có
+        if (file != null && !file.isEmpty()) {
+            // Xóa ảnh cũ nếu có
+            if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                try {
+                    storageService.deleteFile(user.getAvatar());
+                } catch (Exception e) {
+                    System.err.println("Warning: Could not delete old avatar");
+                }
+            }
+            // Upload ảnh mới
+            String avatarUrl = storageService.uploadFile(file);
+            user.setAvatar(avatarUrl);
+        }
+
+        // 2. Admin có quyền sửa Role
         if (request.getRole() != null) {
             user.setRole(request.getRole());
         }
 
-        mapRequestToUser(user, request); // Cập nhật thông tin chung
-
+        mapRequestToUser(user, request);
         return convertToResponse(userRepository.save(user));
     }
 
     // --- MỚI: USER TỰ CẬP NHẬT (Lấy từ Token) ---
-    // Không cần truyền ID, không cần check Role Admin
-    public UserResponse updateMyProfile(UpdateUserRequest request) {
-        User user = getAuthenticatedUser(); // Lấy chính mình
+    public UserResponse updateMyProfile(UpdateUserRequest request, MultipartFile file) throws IOException {
+        User user = getAuthenticatedUser();
 
-        // User KHÔNG được phép tự sửa Role của mình -> Không set Role ở đây
+        // 1. Xử lý upload ảnh nếu có (Tương tự admin)
+        if (file != null && !file.isEmpty()) {
+            if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                try {
+                    storageService.deleteFile(user.getAvatar());
+                } catch (Exception e) {
+                    System.err.println("Warning: Could not delete old avatar");
+                }
+            }
+            String avatarUrl = storageService.uploadFile(file);
+            user.setAvatar(avatarUrl);
+        }
 
-        mapRequestToUser(user, request); // Cập nhật thông tin chung
+        // User KHÔNG được phép tự sửa Role -> Không set Role
+        mapRequestToUser(user, request);
 
-        // Lưu lại (Lưu ý: Nếu user này có Customer liên kết, có thể cần đồng bộ thông tin sang bảng Customer nếu muốn)
         return convertToResponse(userRepository.save(user));
     }
 
@@ -121,6 +148,7 @@ public class UserService {
                 .dateOfBirth(user.getDateOfBirth())
                 .address(user.getAddress())
                 .role(user.getRole())
+                .avatar(user.getAvatar())
                 .build();
     }
 

@@ -8,10 +8,13 @@ import com.restaurant.restaurant_manager.dto.user.UserResponse;
 import com.restaurant.restaurant_manager.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,12 +31,13 @@ public class UserController {
      * User tự cập nhật thông tin cá nhân
      * PUT /api/v1/user/info
      */
-    @PutMapping("/user/info")
-    @PreAuthorize("isAuthenticated()") // Bất kỳ ai đăng nhập đều được
+    @PutMapping(value = "/user/info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserResponse>> updateMyProfile(
-            @Valid @RequestBody UpdateUserRequest request
-    ) {
-        UserResponse updatedUser = userService.updateMyProfile(request);
+            @ModelAttribute UpdateUserRequest request, // ✅ Đổi sang @ModelAttribute
+            @RequestParam(value = "file", required = false) MultipartFile file
+    ) throws IOException {
+        UserResponse updatedUser = userService.updateMyProfile(request, file);
         return ApiResponse.success(updatedUser, "Profile updated successfully");
     }
 
@@ -78,13 +82,14 @@ public class UserController {
     /**
      * Admin cập nhật thông tin user khác (Có thể đổi Role)
      */
-    @PutMapping("/admin/users/{id}")
+    @PutMapping(value = "/admin/users/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateUserRequest request
-    ) {
-        return ApiResponse.success(userService.updateUser(id, request), "User updated successfully");
+            @ModelAttribute UpdateUserRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file
+    ) throws IOException {
+        return ApiResponse.success(userService.updateUser(id, request, file), "User updated successfully");
     }
 
     @DeleteMapping("/admin/users/{id}")
