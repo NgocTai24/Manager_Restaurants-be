@@ -11,6 +11,7 @@ import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.ReservationRepository;
 import com.restaurant.restaurant_manager.repository.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +27,7 @@ public class ReservationService {
 
     private final ReservationRepository reservationRepository;
     private final RestaurantTableRepository tableRepository;
-
+    private final SimpMessagingTemplate messagingTemplate;
     // Mặc định mỗi slot ăn là 2 tiếng
     private static final int DINING_DURATION_HOURS = 2;
 
@@ -56,7 +57,7 @@ public class ReservationService {
                 .collect(Collectors.toList());
     }
 
-    // --- LOGIC XẾP BÀN (Dành cho Staff) ---
+    // --- LOGIC XẾP BÀN (Có Socket) ---
     @Transactional
     public Reservation assignTable(UUID reservationId, UUID tableId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -65,12 +66,10 @@ public class ReservationService {
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
 
-        // Check 1: Sức chứa của bàn
         if (table.getCapacity() < reservation.getNumberOfGuests()) {
             throw new BadRequestException("Table capacity is not enough");
         }
 
-        // Check 2: Bàn có đang bị trùng lịch không?
         boolean isConflict = isTableBusy(tableId, reservation.getReservationTime(), reservation.getEndTime());
         if (isConflict) {
             throw new BadRequestException("Table is already booked in this time slot");
@@ -78,7 +77,33 @@ public class ReservationService {
 
         reservation.setTable(table);
         reservation.setStatus(ReservationStatus.CONFIRMED);
-        return reservationRepository.save(reservation);
+        Reservation saved = reservationRepository.save(reservation);
+
+        // ✅ SOCKET: Báo cập nhật (để các máy Staff khác thấy bàn này đã đỏ/được xếp)
+        notifyReservationUpdate(saved);
+
+        return saved;
+    }
+
+    @Transactional
+    public Reservation updateStatus(UUID id, ReservationStatus status) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
+        reservation.setStatus(status);
+        Reservation saved = reservationRepository.save(reservation);
+
+        // ✅ SOCKET: Báo cập nhật (Ví dụ: Khách đến, Hủy...)
+        notifyReservationUpdate(saved);
+
+        return saved;
+    }
+
+    // Helper bắn Socket update
+    private void notifyReservationUpdate(Reservation r) {
+        ReservationResponse response = ReservationResponse.fromEntity(r);
+        // Vẫn dùng chung topic /topic/reservations
+        // Ở Frontend sẽ check: Nếu ID đã có trong list -> Update dòng đó. Nếu chưa -> Thêm mới.
+        messagingTemplate.convertAndSend("/topic/reservations", response);
     }
 
     // Helper check trùng lịch
@@ -89,11 +114,4 @@ public class ReservationService {
                 .anyMatch(r -> r.getTable() != null && r.getTable().getId().equals(tableId));
     }
 
-    @Transactional
-    public Reservation updateStatus(UUID id, ReservationStatus status) {
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
-        reservation.setStatus(status);
-        return reservationRepository.save(reservation);
-    }
 }

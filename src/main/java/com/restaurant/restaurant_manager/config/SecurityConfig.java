@@ -43,6 +43,7 @@ public class SecurityConfig {
 
                 // 3. Cấu hình phân quyền (Authorization)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/v1/payments/webhook").permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**", // <-- Đã bao gồm /register, /login, /refresh, /forgot-password ...
@@ -80,10 +81,11 @@ public class SecurityConfig {
 
         // Cho phép Frontend chạy ở port 5173 gọi vào
         // Bạn có thể thêm các domain khác vào list này khi deploy
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173"
-        ));
+//        configuration.setAllowedOrigins(Arrays.asList(
+//                "http://localhost:5173",
+//                "http://127.0.0.1:5173"
+//        ));
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 
         // Cho phép các HTTP method này
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

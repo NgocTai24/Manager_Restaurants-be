@@ -8,6 +8,7 @@ import com.restaurant.restaurant_manager.entity.User;
 import com.restaurant.restaurant_manager.exception.BadRequestException;
 import com.restaurant.restaurant_manager.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class ReservationFacade {
     private final CustomerService customerService;
     private final CustomerRepository customerRepository;
     private final EmailService emailService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public ReservationResponse createReservationForUser(User user, CreateReservationRequest request) {
@@ -26,7 +28,13 @@ public class ReservationFacade {
                 .orElseThrow(() -> new BadRequestException("Customer profile not found"));
 
         Reservation reservation = reservationService.createReservation(customer, request);
+
+        // Gửi Email (Async)
         sendNotificationEmail(customer, reservation);
+
+        // ✅ SOCKET: Báo cho Staff biết có đơn mới
+        notifyStaffNewBooking(reservation);
+
         return ReservationResponse.fromEntity(reservation);
     }
 
@@ -43,6 +51,7 @@ public class ReservationFacade {
 
         Reservation reservation = reservationService.createReservation(customer, request);
         if (customer.getEmail() != null) sendNotificationEmail(customer, reservation);
+        notifyStaffNewBooking(reservation);
         return ReservationResponse.fromEntity(reservation);
     }
 
@@ -54,5 +63,12 @@ public class ReservationFacade {
                     "We will confirm shortly.";
             emailService.sendEmail(customer.getEmail(), subject, text);
         } catch (Exception e) {}
+    }
+    // Helper bắn Socket
+    private void notifyStaffNewBooking(Reservation r) {
+        ReservationResponse response = ReservationResponse.fromEntity(r);
+        // Gửi vào topic: /topic/reservations (Frontend của Staff sẽ subscribe cái này)
+        messagingTemplate.convertAndSend("/topic/reservations", response);
+        System.out.println("📢 Socket sent: New Reservation " + r.getId());
     }
 }
