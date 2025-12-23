@@ -2,10 +2,15 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.category.CategoryRequest;
 import com.restaurant.restaurant_manager.dto.category.CategoryResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Category;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,10 +22,26 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
-    public List<CategoryResponse> getAllCategories() {
-        return categoryRepository.findAll().stream()
+    public PageResponse<CategoryResponse> getAllCategories(int page, int size) {
+        // Sắp xếp theo tên (A-Z) cho dễ nhìn
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<Category> categoryPage = categoryRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<CategoryResponse> content = categoryPage.getContent().stream()
                 .map(CategoryResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<CategoryResponse>builder()
+                .content(content)
+                .pageNo(categoryPage.getNumber())
+                .pageSize(categoryPage.getSize())
+                .totalElements(categoryPage.getTotalElements())
+                .totalPages(categoryPage.getTotalPages())
+                .last(categoryPage.isLast())
+                .build();
     }
 
     public Category getCategoryById(UUID id) {

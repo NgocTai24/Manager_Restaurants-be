@@ -1,5 +1,6 @@
 package com.restaurant.restaurant_manager.service;
 
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.dto.table.CreateTableRequest;
 import com.restaurant.restaurant_manager.dto.table.TableResponse;
 import com.restaurant.restaurant_manager.dto.table.UpdateTableRequest;
@@ -9,6 +10,10 @@ import com.restaurant.restaurant_manager.exception.BadRequestException;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,11 +44,26 @@ public class RestaurantTableService {
         return TableResponse.fromEntity(tableRepository.save(table));
     }
 
-    // --- READ ALL ---
-    public List<TableResponse> getAllTables() {
-        return tableRepository.findAll().stream()
+    public PageResponse<TableResponse> getAllTables(int page, int size) {
+        // Sắp xếp theo tên bàn (Ví dụ: Bàn 01, Bàn 02...)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<RestaurantTable> tablePage = tableRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<TableResponse> content = tablePage.getContent().stream()
                 .map(TableResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<TableResponse>builder()
+                .content(content)
+                .pageNo(tablePage.getNumber())
+                .pageSize(tablePage.getSize())
+                .totalElements(tablePage.getTotalElements())
+                .totalPages(tablePage.getTotalPages())
+                .last(tablePage.isLast())
+                .build();
     }
 
     // --- READ ONE ---

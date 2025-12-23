@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.dto.table.CreateTableRequest;
 import com.restaurant.restaurant_manager.dto.table.TableResponse;
 import com.restaurant.restaurant_manager.dto.table.UpdateTableRequest;
@@ -27,8 +28,12 @@ public class RestaurantTableController {
      */
     @GetMapping("/staff/tables")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<TableResponse>>> getAllTables() {
-        return ApiResponse.success(tableService.getAllTables(), "Tables retrieved successfully");
+    public ResponseEntity<ApiResponse<PageResponse<TableResponse>>> getAllTables(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<TableResponse> tables = tableService.getAllTables(page, size);
+        return ApiResponse.success(tables, "Tables retrieved successfully");
     }
 
     /**

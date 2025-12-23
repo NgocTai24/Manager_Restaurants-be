@@ -1,6 +1,7 @@
 package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.dto.user.ChangePasswordRequest;
 import com.restaurant.restaurant_manager.dto.user.CreateInternalUserRequest;
 import com.restaurant.restaurant_manager.dto.user.UpdateUserRequest;
@@ -61,8 +62,12 @@ public class UserController {
 
     @GetMapping("/admin/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-        return ApiResponse.success(userService.getAllUsers(), "Users retrieved successfully");
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page, // Mặc định trang 0
+            @RequestParam(defaultValue = "10") int size // Mặc định 10 dòng/trang
+    ) {
+        PageResponse<UserResponse> result = userService.getAllUsers(page, size);
+        return ApiResponse.success(result, "Users retrieved successfully");
     }
 
     @GetMapping("/admin/users/{id}")

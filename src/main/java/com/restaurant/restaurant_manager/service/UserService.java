@@ -14,6 +14,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,12 +54,29 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // --- ADMIN: Lấy tất cả ---
     @PreAuthorize("hasRole('ADMIN')")
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
+    public PageResponse<UserResponse> getAllUsers(int page, int size) {
+        // 1. Tạo Pageable (Trang bắt đầu từ 0, sắp xếp theo ID hoặc ngày tạo tùy bạn)
+        // Ở đây mình ví dụ sort theo tên (fullName) tăng dần
+        Pageable pageable = PageRequest.of(page, size, Sort.by("fullName").ascending());
+
+        // 2. Gọi Repository lấy Page<User>
+        Page<User> usersPage = userRepository.findAll(pageable);
+
+        // 3. Convert List<User> sang List<UserResponse>
+        List<UserResponse> content = usersPage.getContent().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+
+        // 4. Đóng gói vào PageResponse
+        return PageResponse.<UserResponse>builder()
+                .content(content)
+                .pageNo(usersPage.getNumber())
+                .pageSize(usersPage.getSize())
+                .totalElements(usersPage.getTotalElements())
+                .totalPages(usersPage.getTotalPages())
+                .last(usersPage.isLast())
+                .build();
     }
 
     // --- ADMIN: Lấy theo ID ---

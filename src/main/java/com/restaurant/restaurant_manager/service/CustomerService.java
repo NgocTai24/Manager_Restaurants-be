@@ -2,11 +2,16 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.customer.CustomerResponse;
 import com.restaurant.restaurant_manager.dto.customer.UpdateCustomerRequest;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Customer;
 import com.restaurant.restaurant_manager.exception.BadRequestException;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,10 +42,26 @@ public class CustomerService {
     }
 
     // --- ADMIN/STAFF: Lấy tất cả khách hàng ---
-    public List<CustomerResponse> getAllCustomers() {
-        return customerRepository.findAll().stream()
+    public PageResponse<CustomerResponse> getAllCustomers(int page, int size) {
+        // Sắp xếp theo tên A-Z (Hoặc đổi thành "loyaltyPoints" .descending() để xem khách VIP)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<Customer> customerPage = customerRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<CustomerResponse> content = customerPage.getContent().stream()
                 .map(CustomerResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<CustomerResponse>builder()
+                .content(content)
+                .pageNo(customerPage.getNumber())
+                .pageSize(customerPage.getSize())
+                .totalElements(customerPage.getTotalElements())
+                .totalPages(customerPage.getTotalPages())
+                .last(customerPage.isLast())
+                .build();
     }
 
     // --- ADMIN/STAFF: Tìm kiếm khách hàng (Quan trọng cho Staff) ---

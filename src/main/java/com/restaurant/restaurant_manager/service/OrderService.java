@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.order.CreateOrderRequest;
 import com.restaurant.restaurant_manager.dto.order.OrderResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.*;
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
 import com.restaurant.restaurant_manager.entity.enums.PaymentMethod;
@@ -9,6 +10,10 @@ import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.OrderRepository;
 import com.restaurant.restaurant_manager.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,11 +76,26 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // Lấy danh sách order (Admin)
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream()
+    public PageResponse<OrderResponse> getAllOrders(int page, int size) {
+        // Sắp xếp theo thời gian đặt hàng mới nhất lên đầu (DESC)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("orderTime").descending());
+
+        Page<Order> orderPage = orderRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<OrderResponse> content = orderPage.getContent().stream()
                 .map(OrderResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<OrderResponse>builder()
+                .content(content)
+                .pageNo(orderPage.getNumber())
+                .pageSize(orderPage.getSize())
+                .totalElements(orderPage.getTotalElements())
+                .totalPages(orderPage.getTotalPages())
+                .last(orderPage.isLast())
+                .build();
     }
 
     @Transactional

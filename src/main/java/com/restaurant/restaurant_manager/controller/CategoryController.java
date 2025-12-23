@@ -3,6 +3,7 @@ package com.restaurant.restaurant_manager.controller;
 import com.restaurant.restaurant_manager.dto.category.CategoryRequest;
 import com.restaurant.restaurant_manager.dto.category.CategoryResponse;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Category;
 import com.restaurant.restaurant_manager.service.CategoryService;
 import jakarta.validation.Valid;
@@ -29,9 +30,19 @@ public class CategoryController {
     }
 
     @GetMapping("/public/categories")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> getAllCategories() {
-        List<CategoryResponse> categories = categoryService.getAllCategories();
+    public ResponseEntity<ApiResponse<PageResponse<CategoryResponse>>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<CategoryResponse> categories = categoryService.getAllCategories(page, size);
         return ApiResponse.success(categories, "Categories retrieved successfully");
+    }
+
+    @GetMapping("/public/categories/{id}")
+    public ResponseEntity<ApiResponse<CategoryResponse>> getCategoryById(@PathVariable UUID id) {
+        Category category = categoryService.getCategoryById(id);
+        CategoryResponse response = CategoryResponse.fromEntity(category);
+        return ApiResponse.success(response, "Category retrieved successfully");
     }
 
 

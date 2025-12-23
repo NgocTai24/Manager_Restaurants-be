@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.reservation.CreateReservationRequest;
 import com.restaurant.restaurant_manager.dto.reservation.ReservationResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Customer;
 import com.restaurant.restaurant_manager.entity.Reservation;
 import com.restaurant.restaurant_manager.entity.RestaurantTable;
@@ -11,11 +12,17 @@ import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.ReservationRepository;
 import com.restaurant.restaurant_manager.repository.RestaurantTableRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,10 +58,26 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
-    public List<ReservationResponse> getAllReservations() {
-        return reservationRepository.findAll().stream()
+    public PageResponse<ReservationResponse> getAllReservations(int page, int size) {
+        // Ở đây để DESC (Giảm dần) để thấy các đơn mới nhất hoặc tương lai gần nhất
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reservationTime").descending());
+
+        Page<Reservation> reservationPage = reservationRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<ReservationResponse> content = reservationPage.getContent().stream()
                 .map(ReservationResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<ReservationResponse>builder()
+                .content(content)
+                .pageNo(reservationPage.getNumber())
+                .pageSize(reservationPage.getSize())
+                .totalElements(reservationPage.getTotalElements())
+                .totalPages(reservationPage.getTotalPages())
+                .last(reservationPage.isLast())
+                .build();
     }
 
     // --- LOGIC XẾP BÀN (Có Socket) ---
@@ -112,6 +135,46 @@ public class ReservationService {
         // Lọc xem trong các đơn trùng giờ, có đơn nào đã book cái bàn này chưa
         return conflicts.stream()
                 .anyMatch(r -> r.getTable() != null && r.getTable().getId().equals(tableId));
+    }
+
+    // --- MỚI: TÌM THEO TRẠNG THÁI ---
+    public PageResponse<ReservationResponse> getReservationsByStatus(ReservationStatus status, int page, int size) {
+        // Sắp xếp giảm dần (mới nhất lên đầu)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reservationTime").descending());
+
+        Page<Reservation> reservationPage = reservationRepository.findByStatus(status, pageable);
+
+        return convertToPageResponse(reservationPage);
+    }
+
+    // --- MỚI: TÌM THEO NGÀY CỤ THỂ ---
+    public PageResponse<ReservationResponse> getReservationsByDate(LocalDate date, int page, int size) {
+        // Với xem lịch theo ngày, nên sắp xếp Tăng dần (Sáng -> Tối) để dễ theo dõi
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reservationTime").ascending());
+
+        // Tạo khoảng thời gian: Từ 00:00:00 đến 23:59:59 của ngày đó
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
+
+        Page<Reservation> reservationPage = reservationRepository.findByReservationTimeBetween(startOfDay, endOfDay, pageable);
+
+        return convertToPageResponse(reservationPage);
+    }
+
+    // Helper: Tránh lặp code convert (Bạn có thể refactor các hàm cũ dùng cái này cho gọn)
+    private PageResponse<ReservationResponse> convertToPageResponse(Page<Reservation> page) {
+        List<ReservationResponse> content = page.getContent().stream()
+                .map(ReservationResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return PageResponse.<ReservationResponse>builder()
+                .content(content)
+                .pageNo(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
 }

@@ -3,6 +3,7 @@ package com.restaurant.restaurant_manager.controller;
 import com.restaurant.restaurant_manager.dto.order.CreateOrderRequest;
 import com.restaurant.restaurant_manager.dto.order.OrderResponse;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.User;
 import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
 import com.restaurant.restaurant_manager.service.OrderFacade;
@@ -70,8 +71,12 @@ public class OrderController {
      */
     @GetMapping("/staff/orders")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getAllOrders() {
-        return ApiResponse.success(orderService.getAllOrders(), "List of orders");
+    public ResponseEntity<ApiResponse<PageResponse<OrderResponse>>> getAllOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<OrderResponse> orders = orderService.getAllOrders(page, size);
+        return ApiResponse.success(orders, "List of orders retrieved successfully");
     }
 
     /**

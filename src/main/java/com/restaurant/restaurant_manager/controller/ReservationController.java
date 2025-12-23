@@ -3,6 +3,7 @@ package com.restaurant.restaurant_manager.controller;
 import com.restaurant.restaurant_manager.dto.reservation.CreateReservationRequest;
 import com.restaurant.restaurant_manager.dto.reservation.ReservationResponse;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Reservation;
 import com.restaurant.restaurant_manager.entity.User;
 import com.restaurant.restaurant_manager.entity.enums.ReservationStatus;
@@ -10,11 +11,13 @@ import com.restaurant.restaurant_manager.service.ReservationFacade;
 import com.restaurant.restaurant_manager.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,8 +48,38 @@ public class ReservationController {
     // 3. Admin xem tất cả
     @GetMapping("/staff/reservations")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<ReservationResponse>>> getAll() {
-        return ApiResponse.success(reservationService.getAllReservations(), "List reservations");
+    public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<ReservationResponse> result = reservationService.getAllReservations(page, size);
+        return ApiResponse.success(result, "List reservations retrieved successfully");
+    }
+
+    // 3.1. Tìm kiếm theo trạng thái (Ví dụ: Lấy các đơn PENDING để duyệt)
+    // GET /api/v1/staff/reservations/status?status=PENDING&page=0
+    @GetMapping("/staff/reservations/status")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> getByStatus(
+            @RequestParam ReservationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<ReservationResponse> result = reservationService.getReservationsByStatus(status, page, size);
+        return ApiResponse.success(result, "Reservations by status retrieved");
+    }
+
+    // 3.2. Tìm kiếm theo ngày (Ví dụ: Xem lịch hôm nay 2023-12-25)
+    // GET /api/v1/staff/reservations/date?date=2023-12-25
+    @GetMapping("/staff/reservations/date")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> getByDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<ReservationResponse> result = reservationService.getReservationsByDate(date, page, size);
+        return ApiResponse.success(result, "Reservations by date retrieved");
     }
 
     // 4. Staff xếp bàn (Confirm)

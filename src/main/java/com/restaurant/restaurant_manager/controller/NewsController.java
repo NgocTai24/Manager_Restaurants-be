@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.news.NewsDTOs.*;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.User;
 import com.restaurant.restaurant_manager.service.NewsService;
 import jakarta.validation.Valid;
@@ -22,9 +23,14 @@ public class NewsController {
     private final NewsService newsService;
 
     // 1. Xem danh sách tin tức (Public - Khách chưa đăng nhập cũng xem được)
+    // GET /api/v1/public/news?page=0&size=10
     @GetMapping("/public/news")
-    public ResponseEntity<ApiResponse<List<NewsResponse>>> getAllNews() {
-        return ApiResponse.success(newsService.getAllNews(), "Latest news retrieved");
+    public ResponseEntity<ApiResponse<PageResponse<NewsResponse>>> getAllNews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<NewsResponse> result = newsService.getAllNews(page, size);
+        return ApiResponse.success(result, "Latest news retrieved successfully");
     }
 
     // 2. Xem chi tiết tin tức (Public)

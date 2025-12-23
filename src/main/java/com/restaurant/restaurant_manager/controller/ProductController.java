@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.product.ProductResponse;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -57,8 +58,11 @@ public class ProductController {
     }
 
     @GetMapping("/public/products")
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts() {
-        List<ProductResponse> products = productService.getAllProducts();
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<ProductResponse> products = productService.getAllProducts(page, size);
         return ApiResponse.success(products, "Products retrieved successfully");
     }
 

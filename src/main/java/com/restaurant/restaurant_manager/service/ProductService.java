@@ -1,12 +1,17 @@
 package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.dto.product.ProductResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.entity.Category;
 import com.restaurant.restaurant_manager.entity.Product;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.repository.CategoryRepository;
 import com.restaurant.restaurant_manager.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,11 +28,26 @@ public class ProductService {
     private final CategoryRepository categoryRepository; // Dùng để tìm Category
     private final IStorageService storageService; // Tiêm Interface (Adapter Pattern)
 
-    // Lấy tất cả (public)
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
+    public PageResponse<ProductResponse> getAllProducts(int page, int size) {
+        // Sắp xếp theo tên sản phẩm
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<Product> productPage = productRepository.findAll(pageable);
+
+        // Convert Entity -> DTO
+        List<ProductResponse> content = productPage.getContent().stream()
                 .map(ProductResponse::fromEntity)
                 .collect(Collectors.toList());
+
+        // Đóng gói vào PageResponse
+        return PageResponse.<ProductResponse>builder()
+                .content(content)
+                .pageNo(productPage.getNumber())
+                .pageSize(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .last(productPage.isLast())
+                .build();
     }
 
     // Lấy 1 (public)

@@ -3,6 +3,7 @@ package com.restaurant.restaurant_manager.controller;
 import com.restaurant.restaurant_manager.dto.customer.CustomerResponse;
 import com.restaurant.restaurant_manager.dto.customer.UpdateCustomerRequest;
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
+import com.restaurant.restaurant_manager.dto.response.PageResponse;
 import com.restaurant.restaurant_manager.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +21,14 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-    // --- 1. Lấy tất cả (Dành cho Admin/Staff) ---
+    // GET /api/v1/staff/customers?page=0&size=10
     @GetMapping("/staff/customers")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<ApiResponse<List<CustomerResponse>>> getAllCustomers() {
-        List<CustomerResponse> customers = customerService.getAllCustomers();
+    public ResponseEntity<ApiResponse<PageResponse<CustomerResponse>>> getAllCustomers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<CustomerResponse> customers = customerService.getAllCustomers(page, size);
         return ApiResponse.success(customers, "Customers retrieved successfully");
     }
 
