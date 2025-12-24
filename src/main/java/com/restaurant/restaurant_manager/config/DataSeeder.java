@@ -15,9 +15,8 @@ public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    // 1. Inject CategorySeeder vừa tạo
     private final CategorySeeder categorySeeder;
+    private final TableSeeder tableSeeder;
 
     @Override
     @Transactional
@@ -26,11 +25,8 @@ public class DataSeeder implements CommandLineRunner {
 
         // 2. Chạy Seeder cho User (Logic cũ của bạn)
         seedUsers();
-
-        // 3. Chạy Seeder cho Category (Mới thêm)
         categorySeeder.seed();
-
-        // 4. Sau này có ProductSeeder, TableSeeder thì gọi tiếp ở đây...
+        tableSeeder.seed();
         // productSeeder.seed();
 
         System.out.println("🏁 Hoàn tất khởi tạo dữ liệu.");

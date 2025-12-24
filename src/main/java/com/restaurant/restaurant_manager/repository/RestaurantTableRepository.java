@@ -11,4 +11,6 @@ import java.util.UUID;
 @Repository
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, UUID> {
     List<RestaurantTable> findByStatus(TableStatus status);
+
+    boolean existsByName(String name);
 }

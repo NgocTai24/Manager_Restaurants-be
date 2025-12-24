@@ -24,16 +24,16 @@ public class RestaurantTable {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String name; // Ví dụ: Bàn 01, VIP 02
+    private String name;
 
     @Column(nullable = false)
-    private int capacity; // Số ghế: 2, 4, 6, 10
+    private int capacity;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TableStatus status; // AVAILABLE, OCCUPIED, RESERVED (Trạng thái hiện tại)
+    private TableStatus status;
 
-    private String description; // Ví dụ: "Gần cửa sổ", "Phòng lạnh"
+    private String description;
 
     @OneToMany(mappedBy = "table", fetch = FetchType.LAZY)
     private Set<Reservation> reservations = new HashSet<>();
