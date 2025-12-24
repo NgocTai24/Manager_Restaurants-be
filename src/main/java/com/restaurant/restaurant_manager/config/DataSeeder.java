@@ -9,10 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Class này sẽ chạy tự động khi ứng dụng khởi động (nhờ implements CommandLineRunner)
- * Dùng để tạo tài khoản Admin và Staff mẫu ban đầu.
- */
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -20,9 +16,28 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // 1. Inject CategorySeeder vừa tạo
+    private final CategorySeeder categorySeeder;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        System.out.println("🚀 Bắt đầu khởi tạo dữ liệu mẫu...");
+
+        // 2. Chạy Seeder cho User (Logic cũ của bạn)
+        seedUsers();
+
+        // 3. Chạy Seeder cho Category (Mới thêm)
+        categorySeeder.seed();
+
+        // 4. Sau này có ProductSeeder, TableSeeder thì gọi tiếp ở đây...
+        // productSeeder.seed();
+
+        System.out.println("🏁 Hoàn tất khởi tạo dữ liệu.");
+    }
+
+    // Tách logic User xuống đây cho gọn (Hoặc tốt nhất là chuyển sang UserSeeder.java)
+    private void seedUsers() {
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
             User admin = new User();
             admin.setFullName("Super Admin");
@@ -30,12 +45,10 @@ public class DataSeeder implements CommandLineRunner {
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(UserRole.ADMIN);
             admin.setAddress("Hanoi, Vietnam");
-
             userRepository.save(admin);
-            System.out.println("✅ Đã khởi tạo tài khoản ADMIN: admin@gmail.com / admin123");
+            System.out.println("✅ User Seeder: Đã tạo Admin");
         }
 
-        // 2. Tạo tài khoản STAFF (nếu chưa có)
         if (userRepository.findByEmail("staff@gmail.com").isEmpty()) {
             User staff = new User();
             staff.setFullName("Nhan Vien 1");
@@ -43,10 +56,8 @@ public class DataSeeder implements CommandLineRunner {
             staff.setPassword(passwordEncoder.encode("staff123"));
             staff.setRole(UserRole.STAFF);
             staff.setAddress("Hanoi, Vietnam");
-
             userRepository.save(staff);
-            System.out.println("✅ Đã khởi tạo tài khoản STAFF: staff@gmail.com / staff123");
+            System.out.println("✅ User Seeder: Đã tạo Staff");
         }
     }
 }
-
