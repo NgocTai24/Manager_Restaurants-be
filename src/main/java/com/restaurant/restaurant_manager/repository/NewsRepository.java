@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface NewsRepository extends JpaRepository<News, UUID> {
     // Lấy tin tức mới nhất trước
     List<News> findAllByOrderByCreatedAtDesc();
+
+    boolean existsByTitle(String title);
 }

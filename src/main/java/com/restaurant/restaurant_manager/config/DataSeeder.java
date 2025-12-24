@@ -17,6 +17,7 @@ public class DataSeeder implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final CategorySeeder categorySeeder;
     private final TableSeeder tableSeeder;
+    private final NewsSeeder newsSeeder;
 
     @Override
     @Transactional
@@ -27,6 +28,7 @@ public class DataSeeder implements CommandLineRunner {
         seedUsers();
         categorySeeder.seed();
         tableSeeder.seed();
+        newsSeeder.seed();
         // productSeeder.seed();
 
         System.out.println("🏁 Hoàn tất khởi tạo dữ liệu.");
