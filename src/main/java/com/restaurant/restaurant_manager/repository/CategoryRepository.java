@@ -1,4 +1,4 @@
-// src/main/java/com/restaurant/restaurant_manager/repository/CategoryRepository.java
+
 package com.restaurant.restaurant_manager.repository;
 
 import com.restaurant.restaurant_manager.entity.Category;

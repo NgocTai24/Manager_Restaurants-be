@@ -16,18 +16,16 @@ import java.util.UUID;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
 
-    // --- 1. MỚI THÊM: Tìm theo trạng thái (Có phân trang) ---
+    // --- 1. Tìm theo trạng thái (Có phân trang) ---
     Page<Reservation> findByStatus(ReservationStatus status, Pageable pageable);
 
-    // --- 2. MỚI THÊM: Tìm trong khoảng thời gian (Có phân trang) ---
-    // Dùng để tìm đơn theo Ngày (Từ 00:00:00 đến 23:59:59)
+    // --- 2. Tìm trong khoảng thời gian (Có phân trang) ---
     Page<Reservation> findByReservationTimeBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
 
-    // --- 3. Lịch sử đặt bàn của khách (Giữ nguyên) ---
+    // --- 3. Lịch sử đặt bàn của khách ---
     List<Reservation> findByCustomerId(UUID customerId);
 
-    // --- 4. Check trùng lịch (Giữ nguyên logic của bạn) ---
-    // Tìm các đơn đang hoạt động (PENDING, CONFIRMED, ARRIVED) bị trùng giờ
+    // --- 4. Check trùng lịch ---
     @Query("SELECT r FROM Reservation r " +
             "WHERE r.status IN ('PENDING', 'CONFIRMED', 'ARRIVED') " +
             "AND (" +
@@ -37,4 +35,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
             ")")
     List<Reservation> findConflictingReservations(@Param("start") LocalDateTime start,
                                                   @Param("end") LocalDateTime end);
+
+    // --- 5. MỚI THÊM: PHỤC VỤ THỐNG KÊ (DASHBOARD) ---
+    // Đếm số lượng đơn theo một danh sách các trạng thái
+    // Ví dụ: Đếm xem có bao nhiêu đơn đang PENDING hoặc CONFIRMED (để hiện lên Dashboard)
+    long countByStatusIn(List<ReservationStatus> statuses);
 }
