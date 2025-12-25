@@ -1,4 +1,4 @@
-package com.restaurant.restaurant_manager.config;
+package com.restaurant.restaurant_manager.config.seeder;
 
 import com.restaurant.restaurant_manager.entity.Customer;
 import com.restaurant.restaurant_manager.repository.CustomerRepository;

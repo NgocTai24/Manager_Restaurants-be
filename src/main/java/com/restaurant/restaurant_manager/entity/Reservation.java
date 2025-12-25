@@ -25,7 +25,6 @@ public class Reservation {
     @Column(nullable = false)
     private LocalDateTime reservationTime;
 
-    // Thời gian dự kiến trả bàn (Thường mặc định là reservationTime + 2 tiếng)
     // Trường này quan trọng để check bàn trống
     @Column(nullable = false)
     private LocalDateTime endTime;

@@ -1,4 +1,4 @@
-package com.restaurant.restaurant_manager.config;
+package com.restaurant.restaurant_manager.config.seeder;
 
 import com.restaurant.restaurant_manager.entity.News;
 import com.restaurant.restaurant_manager.entity.User;

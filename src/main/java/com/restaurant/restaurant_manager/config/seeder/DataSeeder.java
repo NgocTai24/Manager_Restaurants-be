@@ -1,4 +1,4 @@
-package com.restaurant.restaurant_manager.config;
+package com.restaurant.restaurant_manager.config.seeder;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -16,6 +16,7 @@ public class DataSeeder implements CommandLineRunner {
     private final ProductSeeder productSeeder;
     private final TableSeeder tableSeeder;
     private final NewsSeeder newsSeeder;
+    private final ReservationSeeder reservationSeeder;
 
     @Override
     @Transactional
@@ -24,11 +25,11 @@ public class DataSeeder implements CommandLineRunner {
 
         userSeeder.seed();
         customerSeeder.seed();
-
         categorySeeder.seed();
         productSeeder.seed();
         tableSeeder.seed();
         newsSeeder.seed();
+        reservationSeeder.seed();
 
         System.out.println("🏁 Hoàn tất khởi tạo dữ liệu.");
     }
