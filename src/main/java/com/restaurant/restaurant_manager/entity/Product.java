@@ -29,6 +29,7 @@ public class Product {
     @Column(nullable = false)
     private Double price;
 
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
     // Nhiều sản phẩm thuộc về một danh mục
