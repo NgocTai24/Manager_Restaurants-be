@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -94,28 +95,53 @@ public class AuthService {
 
     // --- login giữ nguyên ---
     public AuthResponse login(LoginRequest request) {
-        // ... (Giữ nguyên code cũ của bạn) ...
+        // 1. Xác thực username/password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
+
+        // 2. Lấy thông tin User
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
+        // 3. Tạo Token
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
+        // 4. Lưu Refresh Token
         user.setRefreshToken(refreshToken);
         user.setRefreshTokenExpiry(LocalDateTime.now().plusDays(7));
         userRepository.save(user);
 
-        return AuthResponse.builder()
+        // 5. Build Response cơ bản
+        AuthResponse.AuthResponseBuilder responseBuilder = AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .avatar(user.getAvatar())
-                .build();
+                .avatar(user.getAvatar());
+
+        // 6. ✅ LOGIC MỚI: Lấy thông tin chi tiết
+        // Cố gắng tìm hồ sơ Customer liên kết với User này
+        Optional<Customer> customerOpt = customerRepository.findByUserId(user.getId());
+
+        if (customerOpt.isPresent()) {
+            // Nếu là Customer -> Lấy thông tin từ bảng Customer (vì bảng này chuẩn nhất cho khách hàng)
+            Customer customer = customerOpt.get();
+            responseBuilder.customerId(customer.getId());
+            responseBuilder.phone(customer.getPhone());
+            responseBuilder.address(customer.getAddress());
+            responseBuilder.dateOfBirth(customer.getDateOfBirth());
+        } else {
+            // Nếu không phải Customer (ví dụ Admin/Staff) hoặc chưa có hồ sơ Customer
+            // Lấy tạm từ bảng User (nếu bảng User của bạn có các trường này)
+            responseBuilder.address(user.getAddress());
+            responseBuilder.dateOfBirth(user.getDateOfBirth());
+            // Phone có thể null nếu bảng User không có trường phone
+        }
+
+        return responseBuilder.build();
     }
 
     // --- refreshToken, forgotPassword, verifyCode, resetPassword giữ nguyên ---

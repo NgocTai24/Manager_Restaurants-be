@@ -5,6 +5,9 @@ import com.restaurant.restaurant_manager.entity.enums.UserRole;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.util.UUID;
+
 @Data
 @Builder
 public class AuthResponse {
@@ -19,4 +22,9 @@ public class AuthResponse {
     private String fullName;
     private UserRole role;
     private String avatar;
+
+    private UUID customerId;
+    private String phone;
+    private String address;
+    private LocalDate dateOfBirth;
 }
