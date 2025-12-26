@@ -79,12 +79,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Cho phép Frontend chạy ở port 5173 gọi vào
-        // Bạn có thể thêm các domain khác vào list này khi deploy
-//        configuration.setAllowedOrigins(Arrays.asList(
-//                "http://localhost:5173",
-//                "http://127.0.0.1:5173"
-//        ));
         configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 
         // Cho phép các HTTP method này

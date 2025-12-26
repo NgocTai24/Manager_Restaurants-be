@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository; // Dùng để tìm Category
-    private final IStorageService storageService; // Tiêm Interface (Adapter Pattern)
+    private final CategoryRepository categoryRepository;
+    private final IStorageService storageService;
 
     public PageResponse<ProductResponse> getAllProducts(int page, int size) {
         // Sắp xếp theo tên sản phẩm
@@ -121,5 +121,33 @@ public class ProductService {
 
         // Xóa trong DB
         productRepository.delete(product);
+    }
+
+    public PageResponse<ProductResponse> getProductsByCategory(UUID categoryId, int page, int size) {
+        // Kiểm tra Category có tồn tại không (Optional, nhưng nên có để báo lỗi rõ ràng)
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ResourceNotFoundException("Category not found");
+        }
+
+        // Sắp xếp theo tên A-Z (hoặc theo ý bạn)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        // Gọi Repository
+        Page<Product> productPage = productRepository.findByCategoryId(categoryId, pageable);
+
+        // Convert Entity -> DTO
+        List<ProductResponse> content = productPage.getContent().stream()
+                .map(ProductResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        // Đóng gói PageResponse (Giống hệt hàm getAllProducts)
+        return PageResponse.<ProductResponse>builder()
+                .content(content)
+                .pageNo(productPage.getNumber())
+                .pageSize(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .last(productPage.isLast())
+                .build();
     }
 }

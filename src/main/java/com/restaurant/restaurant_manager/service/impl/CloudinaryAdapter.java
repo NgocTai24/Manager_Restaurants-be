@@ -37,10 +37,7 @@ public class CloudinaryAdapter implements IStorageService {
         }
     }
 
-    /**
-     * Hàm helper để trích xuất public_id từ URL của Cloudinary
-     * Ví dụ: http://.../v12345/folder/public_id.jpg -> trả về "folder/public_id"
-     */
+
     private String extractPublicIdFromUrl(String imageUrl) {
         // Pattern regex để tìm public_id (phần nằm sau /upload/v.../ và trước phần mở rộng file)
         Pattern pattern = Pattern.compile("/v\\d+/(.+?)\\.\\w{3,4}$");

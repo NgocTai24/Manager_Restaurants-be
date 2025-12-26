@@ -73,6 +73,14 @@ public class ProductController {
         return ApiResponse.success(product, "Product retrieved successfully");
     }
 
-
+    @GetMapping("/public/categories/{categoryId}/products")
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProductsByCategory(
+            @PathVariable UUID categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        PageResponse<ProductResponse> products = productService.getProductsByCategory(categoryId, page, size);
+        return ApiResponse.success(products, "Products by category retrieved successfully");
+    }
 
 }
