@@ -21,24 +21,25 @@ public class UserSeeder {
     @Transactional
     public void seed() {
         // 1. Tạo Admin (User Only)
-        createInternalUser("admin@gmail.com", "admin123", "Super Admin", UserRole.ADMIN);
+        createInternalUser("admin@gmail.com", "admin123", "Super Admin", UserRole.ADMIN, "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/04/anh-con-gai-15-1.jpg");
 
         // 2. Tạo Staff (User Only)
-        createInternalUser("staff@gmail.com", "staff123", "Nhan Vien 1", UserRole.STAFF);
+        createInternalUser("staff@gmail.com", "staff123", "Nhan Vien 1", UserRole.STAFF, "https://wellavn.com/wp-content/uploads/2025/09/gai-xinh-viet-nam-2.jpg");
 
         // 3. Tạo Khách hàng CÓ TÀI KHOẢN (User + Customer Linked)
         createRegisteredCustomer("user1@gmail.com", "123456", "Nguyen Van A", "0901234567", "Hanoi");
         createRegisteredCustomer("user2@gmail.com", "123456", "Tran Thi B", "0909876543", "Da Nang");
     }
 
-    // Hàm tạo User nội bộ (Admin/Staff) - Không cần tạo Customer profile
-    private void createInternalUser(String email, String password, String name, UserRole role) {
+    // Hàm tạo User nội bộ (Admin/Staff) -
+    private void createInternalUser(String email, String password, String name, UserRole role, String avatar) {
         if (!userRepository.existsByEmail(email)) {
             User user = new User();
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode(password));
             user.setFullName(name);
             user.setRole(role);
+            user.setAvatar(avatar);
             userRepository.save(user);
             System.out.println("✅ Đã tạo User nội bộ: " + email);
         }
