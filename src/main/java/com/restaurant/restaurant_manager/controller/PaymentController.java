@@ -2,11 +2,13 @@ package com.restaurant.restaurant_manager.controller;
 
 import com.restaurant.restaurant_manager.dto.response.ApiResponse;
 import com.restaurant.restaurant_manager.entity.Payment;
+import com.restaurant.restaurant_manager.entity.enums.PaymentStatus;
 import com.restaurant.restaurant_manager.exception.ResourceNotFoundException;
 import com.restaurant.restaurant_manager.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -85,5 +87,15 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<Payment>> getPaymentByOrderId(@PathVariable UUID orderId) {
         Payment payment = paymentService.getPaymentByOrderId(orderId);
         return ApiResponse.success(payment, "Payment retrieved");
+    }
+
+    @PutMapping("/{paymentId}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    public ResponseEntity<ApiResponse<Payment>> updatePaymentStatus(
+            @PathVariable UUID paymentId,
+            @RequestParam PaymentStatus status
+    ) {
+        Payment updatedPayment = paymentService.updatePaymentStatus(paymentId, status);
+        return ApiResponse.success(updatedPayment, "Payment status updated successfully");
     }
 }

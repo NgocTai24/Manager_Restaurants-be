@@ -150,4 +150,16 @@ public class ProductService {
                 .last(productPage.isLast())
                 .build();
     }
+
+    public List<ProductResponse> getFeaturedProducts(int limit) {
+        // Lấy top 'limit' sản phẩm (ví dụ: top 5, top 10)
+        Pageable pageable = PageRequest.of(0, limit);
+
+        List<Product> topProducts = productRepository.findTopSellingProducts(pageable);
+
+        // Convert sang DTO để trả về cho Client
+        return topProducts.stream()
+                .map(ProductResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

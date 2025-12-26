@@ -83,4 +83,12 @@ public class ProductController {
         return ApiResponse.success(products, "Products by category retrieved successfully");
     }
 
+    @GetMapping("/public/products/featured")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getFeaturedProducts(
+            @RequestParam(defaultValue = "5") int limit
+    ) {
+        List<ProductResponse> featuredProducts = productService.getFeaturedProducts(limit);
+        return ApiResponse.success(featuredProducts, "Featured products retrieved successfully");
+    }
+
 }

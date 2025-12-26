@@ -2,6 +2,7 @@ package com.restaurant.restaurant_manager.service;
 
 import com.restaurant.restaurant_manager.entity.Order;
 import com.restaurant.restaurant_manager.entity.Payment;
+import com.restaurant.restaurant_manager.entity.enums.OrderStatus;
 import com.restaurant.restaurant_manager.entity.enums.PaymentMethod;
 import com.restaurant.restaurant_manager.entity.enums.PaymentStatus;
 import com.restaurant.restaurant_manager.exception.BadRequestException;
@@ -156,5 +157,33 @@ public class PaymentService {
     public Payment getPaymentByOrderId(UUID orderId) {
         return paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order: " + orderId));
+    }
+
+    @Transactional
+    public Payment updatePaymentStatus(UUID paymentId, PaymentStatus newStatus) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + paymentId));
+
+        // Cập nhật trạng thái
+        payment.setStatus(newStatus);
+
+        // Logic bổ sung:
+        // Nếu chuyển sang PAID (Đã thanh toán) -> Cập nhật thời gian thanh toán & Đổi trạng thái Order
+        if (newStatus == PaymentStatus.PAID) {
+            payment.setPaidAt(LocalDateTime.now());
+
+            Order order = payment.getOrder();
+            // Nếu đơn hàng đang PENDING (chờ thanh toán), chuyển sang PROCESSING (Đang xử lý/Làm món)
+            if (order.getStatus() == OrderStatus.PENDING) {
+                order.setStatus(OrderStatus.PROCESSING);
+                orderRepository.save(order);
+            }
+        }
+        // Nếu chuyển sang FAILED hoặc UNPAID -> Reset lại thời gian paidAt
+        else {
+            payment.setPaidAt(null);
+        }
+
+        return paymentRepository.save(payment);
     }
 }
