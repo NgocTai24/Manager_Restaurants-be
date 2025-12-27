@@ -14,9 +14,7 @@ public class JacksonConfig {
     @Primary // Đảm bảo Spring dùng bean này làm mặc định
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        // Đăng ký module để xử lý LocalDateTime (Java 8 Date/Time)
         mapper.registerModule(new JavaTimeModule());
-        // Tắt tính năng viết ngày tháng dưới dạng timestamps (số)
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }

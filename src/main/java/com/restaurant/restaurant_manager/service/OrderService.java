@@ -47,7 +47,7 @@ public class OrderService {
         order.setOrderTime(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setNote(note);
-        order.setPaymentMethod(paymentMethod); // ✅ BÂY GIỜ KHÔNG LỖI NỮA
+        order.setPaymentMethod(paymentMethod);
 
         double totalAmount = 0.0;
         List<OrderItem> orderItems = new ArrayList<>();

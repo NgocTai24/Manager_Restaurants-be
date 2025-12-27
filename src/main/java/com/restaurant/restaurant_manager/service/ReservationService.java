@@ -35,17 +35,12 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final RestaurantTableRepository tableRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    // Mặc định mỗi slot ăn là 2 tiếng
     private static final int DINING_DURATION_HOURS = 2;
 
     @Transactional
     public Reservation createReservation(Customer customer, CreateReservationRequest request) {
         LocalDateTime checkIn = request.getReservationTime();
         LocalDateTime checkOut = checkIn.plusHours(DINING_DURATION_HOURS);
-
-        // 1. Tạo Reservation (Chưa gán bàn vội, để PENDING cho Staff xếp sau)
-        // Hoặc: Nếu muốn auto xếp bàn thì viết logic tìm bàn trống ở đây.
-        // Ở đây mình làm theo hướng: Khách đặt -> Hệ thống ghi nhận -> Staff xếp bàn.
 
         Reservation reservation = new Reservation();
         reservation.setCustomer(customer);
@@ -59,17 +54,12 @@ public class ReservationService {
     }
 
     public PageResponse<ReservationResponse> getAllReservations(int page, int size) {
-        // Ở đây để DESC (Giảm dần) để thấy các đơn mới nhất hoặc tương lai gần nhất
         Pageable pageable = PageRequest.of(page, size, Sort.by("reservationTime").descending());
 
         Page<Reservation> reservationPage = reservationRepository.findAll(pageable);
-
-        // Convert Entity -> DTO
         List<ReservationResponse> content = reservationPage.getContent().stream()
                 .map(ReservationResponse::fromEntity)
                 .collect(Collectors.toList());
-
-        // Đóng gói vào PageResponse
         return PageResponse.<ReservationResponse>builder()
                 .content(content)
                 .pageNo(reservationPage.getNumber())
@@ -80,7 +70,7 @@ public class ReservationService {
                 .build();
     }
 
-    // --- LOGIC XẾP BÀN (Có Socket) ---
+    // --- LOGIC XẾP BÀN
     @Transactional
     public Reservation assignTable(UUID reservationId, UUID tableId) {
         Reservation reservation = reservationRepository.findById(reservationId)
@@ -102,7 +92,6 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
         Reservation saved = reservationRepository.save(reservation);
 
-        // ✅ SOCKET: Báo cập nhật (để các máy Staff khác thấy bàn này đã đỏ/được xếp)
         notifyReservationUpdate(saved);
 
         return saved;
@@ -114,8 +103,6 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
         reservation.setStatus(status);
         Reservation saved = reservationRepository.save(reservation);
-
-        // ✅ SOCKET: Báo cập nhật (Ví dụ: Khách đến, Hủy...)
         notifyReservationUpdate(saved);
 
         return saved;
@@ -124,8 +111,6 @@ public class ReservationService {
     // Helper bắn Socket update
     private void notifyReservationUpdate(Reservation r) {
         ReservationResponse response = ReservationResponse.fromEntity(r);
-        // Vẫn dùng chung topic /topic/reservations
-        // Ở Frontend sẽ check: Nếu ID đã có trong list -> Update dòng đó. Nếu chưa -> Thêm mới.
         messagingTemplate.convertAndSend("/topic/reservations", response);
     }
 
@@ -149,7 +134,6 @@ public class ReservationService {
 
     // --- MỚI: TÌM THEO NGÀY CỤ THỂ ---
     public PageResponse<ReservationResponse> getReservationsByDate(LocalDate date, int page, int size) {
-        // Với xem lịch theo ngày, nên sắp xếp Tăng dần (Sáng -> Tối) để dễ theo dõi
         Pageable pageable = PageRequest.of(page, size, Sort.by("reservationTime").ascending());
 
         // Tạo khoảng thời gian: Từ 00:00:00 đến 23:59:59 của ngày đó
@@ -161,7 +145,6 @@ public class ReservationService {
         return convertToPageResponse(reservationPage);
     }
 
-    // Helper: Tránh lặp code convert (Bạn có thể refactor các hàm cũ dùng cái này cho gọn)
     private PageResponse<ReservationResponse> convertToPageResponse(Page<Reservation> page) {
         List<ReservationResponse> content = page.getContent().stream()
                 .map(ReservationResponse::fromEntity)

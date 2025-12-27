@@ -41,23 +41,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             final String jwt;
             final String userEmail;
 
-            // 1. Kiểm tra header
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            // 2. Lấy token
             jwt = authHeader.substring(7);
 
-            // 3. Giải mã (Đây là nơi có thể ném Exception)
             userEmail = jwtService.extractUsername(jwt);
 
-            // 4. Xác thực
+
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-                // 5. Kiểm tra token
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -71,16 +67,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception ex) {
-            // --- ĐÂY LÀ PHẦN SỬA LỖI QUAN TRỌNG ---
-            // Bắt tất cả các lỗi (ExpiredJwtException, SignatureException, v.v...)
-            // và trả về JSON 401 thay vì trang HTML
 
-            // Log lỗi ra console để bạn debug
             System.err.println("Error in JwtAuthFilter: " + ex.getMessage());
 
             ApiResponse<Object> apiResponse = ApiResponse.builder()
                     .statusCode(HttpStatus.UNAUTHORIZED.value())
-                    .message("Unauthorized: " + ex.getMessage()) // Trả về thông báo lỗi thực tế
+                    .message("Unauthorized: " + ex.getMessage())
                     .build();
 
             response.setStatus(HttpStatus.UNAUTHORIZED.value());

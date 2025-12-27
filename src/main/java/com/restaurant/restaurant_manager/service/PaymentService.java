@@ -75,8 +75,6 @@ public class PaymentService {
         // 🔴 CHẾ ĐỘ TEST: HARDCODE TIỀN VỀ 2.000 VNĐ (HOẶC 5.000 VNĐ)
         // ========================================================================
 
-        // Bước A: Tạo 1 item giả thay thế cho list item thật
-        // (Lý do: PayOS bắt buộc tổng tiền = tổng giá trị item, nên phải fake cả item)
         long finalAmount = 2000; // Số tiền bạn muốn chuyển (2k, 5k, 10k...)
 
         List<PaymentLinkItem> items = new ArrayList<>();
@@ -97,7 +95,6 @@ public class PaymentService {
                 .build();
 
         // ========================================================================
-        // 🟢 KHI NÀO CHẠY THẬT (PRODUCTION) THÌ MỞ LẠI CODE DƯỚI NÀY, ĐÓNG ĐOẠN TRÊN
         /*
         List<PaymentLinkItem> items = order.getOrderItems().stream()
                 .map(item -> PaymentLinkItem.builder()

@@ -21,11 +21,9 @@ public class Reservation {
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    // Thời gian khách dự kiến đến
     @Column(nullable = false)
     private LocalDateTime reservationTime;
 
-    // Trường này quan trọng để check bàn trống
     @Column(nullable = false)
     private LocalDateTime endTime;
 
@@ -39,12 +37,10 @@ public class Reservation {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // Thông tin khách hàng (Liên kết với bảng Customer)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    // Bàn được gán (Có thể null lúc mới đặt, Staff sẽ xếp bàn sau hoặc hệ thống tự xếp)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id", nullable = true)
     private RestaurantTable table;

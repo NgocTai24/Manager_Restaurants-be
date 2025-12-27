@@ -43,12 +43,9 @@ public class CustomerService {
 
     // --- ADMIN/STAFF: Lấy tất cả khách hàng ---
     public PageResponse<CustomerResponse> getAllCustomers(int page, int size) {
-        // Sắp xếp theo tên A-Z (Hoặc đổi thành "loyaltyPoints" .descending() để xem khách VIP)
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-
         Page<Customer> customerPage = customerRepository.findAll(pageable);
 
-        // Convert Entity -> DTO
         List<CustomerResponse> content = customerPage.getContent().stream()
                 .map(CustomerResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -64,12 +61,8 @@ public class CustomerService {
                 .build();
     }
 
-    // --- ADMIN/STAFF: Tìm kiếm khách hàng (Quan trọng cho Staff) ---
+    // --- ADMIN/STAFF:
     public List<CustomerResponse> searchCustomers(String keyword) {
-        // Giả sử Repository chưa có hàm search, bạn cần thêm vào Repository hoặc dùng stream filter (tạm thời)
-        // Tốt nhất là thêm: List<Customer> findByNameContainingOrPhoneContaining(String name, String phone); vào Repo
-
-        // Cách dùng Stream (tạm thời nếu chưa sửa Repo):
         return customerRepository.findAll().stream()
                 .filter(c -> c.getName().toLowerCase().contains(keyword.toLowerCase()) ||
                         c.getPhone().contains(keyword))
@@ -90,7 +83,6 @@ public class CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
-        // Check trùng email nếu thay đổi
         if (request.getEmail() != null && !request.getEmail().isEmpty() &&
                 !request.getEmail().equals(customer.getEmail())) {
             if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -113,15 +105,9 @@ public class CustomerService {
     public void deleteCustomer(UUID id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-
-        // Chặn xóa nếu đã có đơn hàng để bảo toàn dữ liệu báo cáo
         if (!customer.getOrders().isEmpty()) {
             throw new BadRequestException("Cannot delete customer who has existing orders. Please deactivate instead.");
         }
-
-        // Nếu customer có User liên kết, có thể cần xử lý ngắt liên kết trước (tùy nghiệp vụ)
-        // Ở đây ta xóa Customer, User vẫn còn nhưng field user.customer sẽ null (nếu mapping đúng)
-
         customerRepository.delete(customer);
     }
 }

@@ -27,35 +27,26 @@ public class RestaurantTableService {
 
     private final RestaurantTableRepository tableRepository;
 
-    // --- CREATE ---
     @Transactional
     public TableResponse createTable(CreateTableRequest request) {
-        // Kiểm tra trùng tên bàn (Optional)
-        // if (tableRepository.existsByName(request.getName())) {
-        //     throw new BadRequestException("Table name already exists");
-        // }
 
         RestaurantTable table = new RestaurantTable();
         table.setName(request.getName());
         table.setCapacity(request.getCapacity());
         table.setDescription(request.getDescription());
-        table.setStatus(TableStatus.AVAILABLE); // Mặc định là trống
+        table.setStatus(TableStatus.AVAILABLE);
 
         return TableResponse.fromEntity(tableRepository.save(table));
     }
 
     public PageResponse<TableResponse> getAllTables(int page, int size) {
-        // Sắp xếp theo tên bàn (Ví dụ: Bàn 01, Bàn 02...)
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 
         Page<RestaurantTable> tablePage = tableRepository.findAll(pageable);
 
-        // Convert Entity -> DTO
         List<TableResponse> content = tablePage.getContent().stream()
                 .map(TableResponse::fromEntity)
                 .collect(Collectors.toList());
-
-        // Đóng gói vào PageResponse
         return PageResponse.<TableResponse>builder()
                 .content(content)
                 .pageNo(tablePage.getNumber())
@@ -66,14 +57,14 @@ public class RestaurantTableService {
                 .build();
     }
 
-    // --- READ ONE ---
+
     public TableResponse getTableById(UUID id) {
         RestaurantTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
         return TableResponse.fromEntity(table);
     }
 
-    // --- UPDATE INFO (ADMIN) ---
+
     @Transactional
     public TableResponse updateTable(UUID id, UpdateTableRequest request) {
         RestaurantTable table = tableRepository.findById(id)
@@ -87,7 +78,6 @@ public class RestaurantTableService {
         return TableResponse.fromEntity(tableRepository.save(table));
     }
 
-    // --- NEW: UPDATE STATUS ONLY (STAFF/ADMIN) ---
     @Transactional
     public TableResponse updateTableStatus(UUID id, TableStatus status) {
         RestaurantTable table = tableRepository.findById(id)
@@ -98,13 +88,10 @@ public class RestaurantTableService {
         return TableResponse.fromEntity(tableRepository.save(table));
     }
 
-    // --- DELETE ---
     @Transactional
     public void deleteTable(UUID id) {
         RestaurantTable table = tableRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Table not found"));
-
-        // Không xóa bàn đang có khách ngồi hoặc đã được đặt
         if (table.getStatus() == TableStatus.OCCUPIED || table.getStatus() == TableStatus.RESERVED) {
             throw new BadRequestException("Cannot delete table while it is OCCUPIED or RESERVED");
         }

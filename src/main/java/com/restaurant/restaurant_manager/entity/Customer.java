@@ -42,13 +42,11 @@ public class Customer {
 
     private int loyaltyPoints;
 
-    // --- MỚI THÊM: LIÊN KẾT VỚI USER ---
     // Một Customer có thể gắn với 1 User (hoặc không - nếu là khách vãng lai)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = true)
     private User user;
 
-    // --- CÁC QUAN HỆ ---
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Reservation> reservations = new HashSet<>();
 

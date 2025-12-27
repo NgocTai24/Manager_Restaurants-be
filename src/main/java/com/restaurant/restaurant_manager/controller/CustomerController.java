@@ -42,7 +42,7 @@ public class CustomerController {
         return ApiResponse.success(customers, "Search results");
     }
 
-    // --- 3. Lấy chi tiết ---
+
     @GetMapping("/staff/customers/{id}")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(@PathVariable UUID id) {
@@ -50,8 +50,7 @@ public class CustomerController {
         return ApiResponse.success(customer, "Customer retrieved successfully");
     }
 
-    // --- 4. Cập nhật (Chỉ Admin hoặc Staff quản lý) ---
-    @PutMapping("/staff/customers/{id}") // Staff có thể sửa thông tin cơ bản
+    @PutMapping("/staff/customers/{id}")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<CustomerResponse>> updateCustomer(
             @PathVariable UUID id,

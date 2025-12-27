@@ -35,7 +35,6 @@ public class News {
 
     private LocalDateTime updatedAt;
 
-    // Nhiều tin tức được viết bởi một User (Admin/Staff)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;

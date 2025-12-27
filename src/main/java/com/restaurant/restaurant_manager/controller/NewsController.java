@@ -22,8 +22,7 @@ public class NewsController {
 
     private final NewsService newsService;
 
-    // 1. Xem danh sách tin tức (Public - Khách chưa đăng nhập cũng xem được)
-    // GET /api/v1/public/news?page=0&size=10
+
     @GetMapping("/public/news")
     public ResponseEntity<ApiResponse<PageResponse<NewsResponse>>> getAllNews(
             @RequestParam(defaultValue = "0") int page,
@@ -33,13 +32,12 @@ public class NewsController {
         return ApiResponse.success(result, "Latest news retrieved successfully");
     }
 
-    // 2. Xem chi tiết tin tức (Public)
     @GetMapping("/public/news/{id}")
     public ResponseEntity<ApiResponse<NewsResponse>> getNewsById(@PathVariable UUID id) {
         return ApiResponse.success(newsService.getNewsById(id), "News details retrieved");
     }
 
-    // 3. Tạo tin tức (Chỉ Staff/Admin)
+
     @PostMapping("/staff/news")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<NewsResponse>> createNews(
@@ -49,7 +47,7 @@ public class NewsController {
         return ApiResponse.created(newsService.createNews(user, request), "News created successfully");
     }
 
-    // 4. Cập nhật tin tức (Chỉ Staff/Admin)
+
     @PutMapping("/staff/news/{id}")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
     public ResponseEntity<ApiResponse<NewsResponse>> updateNews(

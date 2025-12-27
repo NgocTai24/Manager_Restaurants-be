@@ -29,10 +29,8 @@ public class ReservationFacade {
 
         Reservation reservation = reservationService.createReservation(customer, request);
 
-        // Gửi Email (Async)
         sendNotificationEmail(customer, reservation);
 
-        // ✅ SOCKET: Báo cho Staff biết có đơn mới
         notifyStaffNewBooking(reservation);
 
         return ReservationResponse.fromEntity(reservation);

@@ -33,11 +33,9 @@ public class OrderFacade {
      */
     @Transactional
     public OrderResponse placeOrderForUser(User user, CreateOrderRequest request) {
-        // 1. Tìm Customer
         Customer customer = customerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new BadRequestException("Customer profile not found for this user."));
 
-        // 2. Tạo Order
         Order order = orderService.createOrder(
                 customer,
                 request.getItems(),
@@ -45,34 +43,27 @@ public class OrderFacade {
                 request.getPaymentMethod()
         );
 
-        // 3. Tạo Payment (Gọi PayOS)
         Payment payment = paymentService.createPayment(order);
 
-        // 4. Gửi email
         sendOrderConfirmationEmail(customer, order, payment);
 
-        // 5. Trả về response
         OrderResponse response = OrderResponse.fromEntity(order);
-        // Map dữ liệu Payment sang Response thủ công để đảm bảo có dữ liệu ngay lập tức
         if (payment != null) {
             response.setPaymentUrl(payment.getPaymentUrl());
             response.setPaymentStatus(payment.getStatus());
-            response.setPayosOrderCode(payment.getPayosOrderCode()); // ✅ Quan trọng để test Webhook
+            response.setPayosOrderCode(payment.getPayosOrderCode());
         }
 
         return response;
     }
 
-    /**
-     * Case 2: Đặt hàng cho Khách vãng lai
-     */
+
     @Transactional
     public OrderResponse placeOrderForGuest(CreateOrderRequest request) {
         if (request.getCustomerInfo() == null) {
             throw new BadRequestException("Customer info is required for guest orders");
         }
 
-        // 1. Tìm hoặc tạo Customer
         Customer customer = customerService.findOrCreateCustomer(
                 request.getCustomerInfo().getPhone(),
                 request.getCustomerInfo().getName(),
@@ -80,7 +71,6 @@ public class OrderFacade {
                 request.getCustomerInfo().getAddress()
         );
 
-        // 2. Tạo Order
         Order order = orderService.createOrder(
                 customer,
                 request.getItems(),
@@ -88,29 +78,22 @@ public class OrderFacade {
                 request.getPaymentMethod()
         );
 
-        // 3. Tạo Payment
         Payment payment = paymentService.createPayment(order);
 
-        // 4. Gửi email
         if (customer.getEmail() != null && !customer.getEmail().isEmpty()) {
             sendOrderConfirmationEmail(customer, order, payment);
         }
 
-        // 5. Trả về response
         OrderResponse response = OrderResponse.fromEntity(order);
         if (payment != null) {
             response.setPaymentUrl(payment.getPaymentUrl());
             response.setPaymentStatus(payment.getStatus());
-            response.setPayosOrderCode(payment.getPayosOrderCode()); // ✅ Quan trọng để test Webhook
+            response.setPayosOrderCode(payment.getPayosOrderCode());
         }
 
         return response;
     }
 
-    // ... Các method updateOrderStatus, cancelOrder... giữ nguyên như cũ của bạn ...
-    /**
-     * Case 3: ADMIN Cập nhật trạng thái
-     */
     @Transactional
     public OrderResponse updateOrderStatus(UUID orderId, OrderStatus status) {
         Order updatedOrder = orderService.updateStatus(orderId, status);
@@ -121,9 +104,7 @@ public class OrderFacade {
         return OrderResponse.fromEntity(updatedOrder);
     }
 
-    /**
-     * Case 4: USER hủy đơn
-     */
+
     @Transactional
     public OrderResponse cancelOrderForUser(User user, UUID orderId) {
         Order order = orderService.findOrderById(orderId);
@@ -145,9 +126,7 @@ public class OrderFacade {
         return OrderResponse.fromEntity(cancelledOrder);
     }
 
-    /**
-     * Case 5: STAFF hủy đơn
-     */
+
     @Transactional
     public OrderResponse cancelOrderForStaff(UUID orderId) {
         Order order = orderService.findOrderById(orderId);
@@ -161,7 +140,6 @@ public class OrderFacade {
         return OrderResponse.fromEntity(cancelledOrder);
     }
 
-    // ========== PRIVATE HELPER METHODS ==========
 
     private void sendOrderConfirmationEmail(Customer customer, Order order, Payment payment) {
         try {
@@ -199,17 +177,9 @@ public class OrderFacade {
         }
     }
 
-    /**
-     * Lấy chi tiết đơn hàng (Dành cho Admin/Staff/User)
-     * Convert từ Entity -> DTO đầy đủ thông tin
-     */
-    public OrderResponse getOrderById(UUID orderId) {
-        // 1. Lấy Entity từ Service (đã có sẵn hàm findById ném lỗi 404 nếu không thấy)
-        Order order = orderService.findOrderById(orderId);
 
-        // 2. Convert sang DTO
-        // Hàm fromEntity() trong DTO chúng ta đã sửa ở bước trước
-        // nên nó sẽ tự động map cả thông tin Payment (nếu có)
+    public OrderResponse getOrderById(UUID orderId) {
+        Order order = orderService.findOrderById(orderId);
         return OrderResponse.fromEntity(order);
     }
 }

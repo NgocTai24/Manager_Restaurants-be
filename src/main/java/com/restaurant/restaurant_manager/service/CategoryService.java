@@ -23,17 +23,14 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public PageResponse<CategoryResponse> getAllCategories(int page, int size) {
-        // Sắp xếp theo tên (A-Z) cho dễ nhìn
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 
         Page<Category> categoryPage = categoryRepository.findAll(pageable);
 
-        // Convert Entity -> DTO
         List<CategoryResponse> content = categoryPage.getContent().stream()
                 .map(CategoryResponse::fromEntity)
                 .collect(Collectors.toList());
 
-        // Đóng gói vào PageResponse
         return PageResponse.<CategoryResponse>builder()
                 .content(content)
                 .pageNo(categoryPage.getNumber())
@@ -56,17 +53,13 @@ public class CategoryService {
     }
 
     public Category updateCategory(UUID id, CategoryRequest request) {
-        Category category = getCategoryById(id); // Tái sử dụng hàm get (đã có check not found)
+        Category category = getCategoryById(id);
         category.setName(request.getName());
         return categoryRepository.save(category);
     }
 
     public void deleteCategory(UUID id) {
         Category category = getCategoryById(id);
-        // (Thêm logic kiểm tra xem category này có đang được 'Product' nào dùng không trước khi xóa)
-        // if (productRepository.existsByCategoryId(id)) {
-        //    throw new BadRequestException("Cannot delete category: it is in use by products.");
-        // }
         categoryRepository.delete(category);
     }
 }

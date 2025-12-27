@@ -20,8 +20,7 @@ public class MailConfig {
     @Value("${spring.mail.username}")
     private String username;
 
-    // Lưu ý: Đây là App Password, không dùng cho OAuth2
-    @Value("${spring.mail.password:}") // Dấu : để không lỗi nếu thiếu
+    @Value("${spring.mail.password:}")
     private String password;
 
     @Bean
@@ -44,7 +43,6 @@ public class MailConfig {
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
         props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
 
-        // Tăng timeout
         props.put("mail.smtp.connectiontimeout", "10000");
         props.put("mail.smtp.timeout", "10000");
         props.put("mail.smtp.writetimeout", "10000");

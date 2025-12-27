@@ -33,7 +33,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final IStorageService storageService;
 
-    // Lấy user đang đăng nhập từ Security Context
     private User getAuthenticatedUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
@@ -56,19 +55,11 @@ public class UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<UserResponse> getAllUsers(int page, int size) {
-        // 1. Tạo Pageable (Trang bắt đầu từ 0, sắp xếp theo ID hoặc ngày tạo tùy bạn)
-        // Ở đây mình ví dụ sort theo tên (fullName) tăng dần
         Pageable pageable = PageRequest.of(page, size, Sort.by("fullName").ascending());
-
-        // 2. Gọi Repository lấy Page<User>
         Page<User> usersPage = userRepository.findAll(pageable);
-
-        // 3. Convert List<User> sang List<UserResponse>
         List<UserResponse> content = usersPage.getContent().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
-
-        // 4. Đóng gói vào PageResponse
         return PageResponse.<UserResponse>builder()
                 .content(content)
                 .pageNo(usersPage.getNumber())
@@ -117,11 +108,9 @@ public class UserService {
         return convertToResponse(userRepository.save(user));
     }
 
-    // --- MỚI: USER TỰ CẬP NHẬT (Lấy từ Token) ---
     public UserResponse updateMyProfile(UpdateUserRequest request, MultipartFile file) throws IOException {
         User user = getAuthenticatedUser();
 
-        // 1. Xử lý upload ảnh nếu có (Tương tự admin)
         if (file != null && !file.isEmpty()) {
             if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
                 try {
@@ -133,8 +122,6 @@ public class UserService {
             String avatarUrl = storageService.uploadFile(file);
             user.setAvatar(avatarUrl);
         }
-
-        // User KHÔNG được phép tự sửa Role -> Không set Role
         mapRequestToUser(user, request);
 
         return convertToResponse(userRepository.save(user));

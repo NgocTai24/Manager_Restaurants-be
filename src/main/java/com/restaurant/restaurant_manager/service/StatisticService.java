@@ -29,14 +29,11 @@ public class StatisticService {
         LocalDateTime endToday = LocalDate.now().atTime(LocalTime.MAX);
         int currentYear = LocalDate.now().getYear();
 
-        // 1. Doanh thu hôm nay (Nếu null thì trả về 0.0)
         Double revenueToday = orderRepository.sumRevenueBetween(startToday, endToday);
         if (revenueToday == null) revenueToday = 0.0;
 
-        // 2. Số đơn hôm nay
         long ordersToday = orderRepository.countByOrderTimeBetween(startToday, endToday);
 
-        // 3. Đơn đặt bàn đang chờ hoặc đã xác nhận (chưa ăn xong)
         long pendingReservations = reservationRepository.countByStatusIn(
                 Arrays.asList(ReservationStatus.PENDING, ReservationStatus.CONFIRMED)
         );
@@ -47,7 +44,6 @@ public class StatisticService {
         // 5. Biểu đồ doanh thu 12 tháng
         List<Object[]> monthlyData = orderRepository.getMonthlyRevenue(currentYear);
         List<StatisticResponse.MonthlyRevenue> monthlyChart = new ArrayList<>();
-        // Khởi tạo mảng đủ 12 tháng (mặc định 0) để biểu đồ không bị gãy khúc
         for (int i = 1; i <= 12; i++) {
             monthlyChart.add(StatisticResponse.MonthlyRevenue.builder().month(i).revenue(0.0).build());
         }
@@ -58,7 +54,6 @@ public class StatisticService {
             monthlyChart.get(month - 1).setRevenue(amount);
         }
 
-        // 6. Top 5 sản phẩm bán chạy
         List<Object[]> bestSellersData = orderRepository.getBestSellingProducts(PageRequest.of(0, 5));
         List<StatisticResponse.BestSellingProduct> topProducts = new ArrayList<>();
         for (Object[] row : bestSellersData) {

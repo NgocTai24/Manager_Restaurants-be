@@ -29,17 +29,12 @@ public class ProductService {
     private final IStorageService storageService;
 
     public PageResponse<ProductResponse> getAllProducts(int page, int size) {
-        // Sắp xếp theo tên sản phẩm
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-
         Page<Product> productPage = productRepository.findAll(pageable);
 
-        // Convert Entity -> DTO
         List<ProductResponse> content = productPage.getContent().stream()
                 .map(ProductResponse::fromEntity)
                 .collect(Collectors.toList());
-
-        // Đóng gói vào PageResponse
         return PageResponse.<ProductResponse>builder()
                 .content(content)
                 .pageNo(productPage.getNumber())
@@ -50,7 +45,6 @@ public class ProductService {
                 .build();
     }
 
-    // Lấy 1 (public)
     public ProductResponse getProductById(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -59,14 +53,11 @@ public class ProductService {
 
     // Tạo (admin)
     public ProductResponse createProduct(String name, Double price, String description, UUID categoryId, MultipartFile file) throws IOException {
-        // 1. Tìm Category
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        // 2. Upload ảnh (Sử dụng Adapter)
         String imageUrl = storageService.uploadFile(file);
 
-        // 3. Tạo Product
         Product product = new Product();
         product.setName(name);
         product.setPrice(price);
@@ -89,13 +80,10 @@ public class ProductService {
             product.setCategory(category);
         }
 
-        // Nếu có file mới, xóa file cũ và upload file mới
         if (file != null && !file.isEmpty()) {
-            // Xóa ảnh cũ (Sử dụng Adapter)
             if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
                 storageService.deleteFile(product.getImageUrl());
             }
-            // Upload ảnh mới
             String newImageUrl = storageService.uploadFile(file);
             product.setImageUrl(newImageUrl);
         }
@@ -113,29 +101,20 @@ public class ProductService {
     public void deleteProduct(UUID id) throws IOException {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-
-        // Xóa ảnh trên Cloudinary (Sử dụng Adapter)
         if (product.getImageUrl() != null && !product.getImageUrl().isEmpty()) {
             storageService.deleteFile(product.getImageUrl());
         }
-
-        // Xóa trong DB
         productRepository.delete(product);
     }
 
     public PageResponse<ProductResponse> getProductsByCategory(UUID categoryId, int page, int size) {
-        // Kiểm tra Category có tồn tại không (Optional, nhưng nên có để báo lỗi rõ ràng)
         if (!categoryRepository.existsById(categoryId)) {
             throw new ResourceNotFoundException("Category not found");
         }
-
-        // Sắp xếp theo tên A-Z (hoặc theo ý bạn)
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 
-        // Gọi Repository
         Page<Product> productPage = productRepository.findByCategoryId(categoryId, pageable);
 
-        // Convert Entity -> DTO
         List<ProductResponse> content = productPage.getContent().stream()
                 .map(ProductResponse::fromEntity)
                 .collect(Collectors.toList());

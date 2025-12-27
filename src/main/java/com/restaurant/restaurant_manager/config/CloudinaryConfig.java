@@ -11,7 +11,6 @@ import java.util.Map;
 @Configuration
 public class CloudinaryConfig {
 
-    // Đọc các thông tin cấu hình từ application.properties
     @Value("${cloudinary.cloud_name}")
     private String cloudName;
 

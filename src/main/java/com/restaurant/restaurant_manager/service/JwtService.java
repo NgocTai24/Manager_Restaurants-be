@@ -36,7 +36,6 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    // ✅ SỬA: Tạo Access Token (có chứa roles)
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
         // Thêm roles vào token
@@ -47,7 +46,7 @@ public class JwtService {
         return buildToken(extraClaims, userDetails, EXPIRATION_TIME);
     }
 
-    // ✅ SỬA: Tạo Refresh Token (có chứa roles)
+
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", userDetails.getAuthorities().stream()
@@ -57,10 +56,9 @@ public class JwtService {
         return buildToken(extraClaims, userDetails, REFRESH_EXPIRATION_TIME);
     }
 
-    // ✅ SỬA: Hàm chung để tạo token (thêm extraClaims)
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts.builder()
-                .claims(extraClaims)  // ✅ THÊM claims (roles)
+                .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiration))

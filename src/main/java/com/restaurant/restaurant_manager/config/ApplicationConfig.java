@@ -19,28 +19,20 @@ public class ApplicationConfig {
 
     private final UserRepository userRepository;
 
-    /**
-     * "Dạy" Spring Security cách tìm User.
-     * Vì ta đăng nhập bằng email, nên ta tìm user bằng email.
-     */
+
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
     }
 
-    /**
-     * Cung cấp cơ chế mã hóa mật khẩu (BCrypt)
-     */
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /**
-     * Cung cấp trình xác thực (Authentication Provider)
-     * Nó sẽ dùng UserDetailsService và PasswordEncoder ở trên
-     */
+
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -49,9 +41,7 @@ public class ApplicationConfig {
         return authProvider;
     }
 
-    /**
-     * Bean này cần thiết cho việc xác thực (ví dụ: lúc đăng nhập)
-     */
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();

@@ -32,9 +32,7 @@ public class EmailService {
     @Value("${google.mail.refresh-token}")
     private String refreshToken;
 
-    /**
-     * Lấy Access Token mới từ Google
-     */
+
     private String getAccessToken() {
         try {
             HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
@@ -47,7 +45,7 @@ public class EmailService {
                     .build();
 
             credential.setRefreshToken(refreshToken);
-            credential.refreshToken(); // Gọi Google để lấy token mới
+            credential.refreshToken();
 
             return credential.getAccessToken();
         } catch (Exception e) {
@@ -61,7 +59,7 @@ public class EmailService {
     private JavaMailSenderImpl getAuthenticatedMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost("smtp.gmail.com");
-        mailSender.setPort(587); // Dùng 587 cho TLS
+        mailSender.setPort(587);
         mailSender.setUsername(emailFrom);
 
         // Mật khẩu chính là Access Token vừa lấy

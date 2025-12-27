@@ -34,7 +34,7 @@ public class NewsService {
         news.setTitle(request.getTitle());
         news.setContent(request.getContent());
         news.setImageUrl(request.getImageUrl());
-        news.setAuthor(author); // Gán tác giả là người đang đăng nhập
+        news.setAuthor(author);
 
         return NewsResponse.fromEntity(newsRepository.save(news));
     }

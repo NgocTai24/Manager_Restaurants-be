@@ -24,7 +24,7 @@ public class UserSeeder {
         createInternalUser("admin@gmail.com", "admin123", "Super Admin", UserRole.ADMIN, "https://hoanghamobile.com/tin-tuc/wp-content/uploads/2024/04/anh-con-gai-15-1.jpg");
 
         // 2. Tạo Staff (User Only)
-        createInternalUser("staff@gmail.com", "staff123", "Nhan Vien 1", UserRole.STAFF, "https://wellavn.com/wp-content/uploads/2025/09/gai-xinh-viet-nam-2.jpg");
+        createInternalUser("staff@gmail.com", "123456", "Nhan Vien 1", UserRole.STAFF, "https://wellavn.com/wp-content/uploads/2025/09/gai-xinh-viet-nam-2.jpg");
 
         // 3. Tạo Khách hàng CÓ TÀI KHOẢN (User + Customer Linked)
         createRegisteredCustomer("user1@gmail.com", "123456", "Nguyen Van A", "0901234567", "Hanoi");

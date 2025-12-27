@@ -21,7 +21,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity // Cho phép dùng @PreAuthorize trên các Controller
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -32,10 +32,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 1. Tắt CSRF (vì dùng JWT, không dùng session/cookie)
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // 2. Cấu hình xử lý lỗi (EntryPoint 401)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
@@ -61,16 +59,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // 4. Cấu hình Session (STATELESS - không dùng session)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // 5. Thêm Authentication Provider
                 .authenticationProvider(authenticationProvider)
 
-                // 6. Thêm Filter JWT (quan trọng nhất)
-                // Chạy filter của ta TRƯỚC filter UsernamePassword...
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

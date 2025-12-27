@@ -24,7 +24,7 @@ public class OrderItem {
     private int quantity;
 
     @Column(nullable = false)
-    private Double priceAtPurchase; // Lưu lại giá tại thời điểm mua
+    private Double priceAtPurchase;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)

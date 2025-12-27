@@ -18,12 +18,10 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
-
     @Id
     @UuidGenerator
     private UUID id;
 
-    // Liên kết với Order (1-1)
     @OneToOne
     @JoinColumn(name = "order_id", nullable = false, unique = true)
     @JsonIgnore
@@ -41,11 +39,11 @@ public class Payment {
     private PaymentStatus status;
 
     // PayOS Transaction Info
-    private Long payosOrderCode; // orderCode của PayOS
-    private String payosTransactionId; // ID giao dịch từ PayOS
+    private Long payosOrderCode;
+    private String payosTransactionId;
 
     @Column(columnDefinition = "TEXT")
-    private String paymentUrl; // Link thanh toán PayOS
+    private String paymentUrl;
 
     private LocalDateTime createdAt;
     private LocalDateTime paidAt;

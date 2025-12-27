@@ -15,7 +15,6 @@ public class EmailController {
 
     private final EmailService emailService;
 
-    // GET /api/v1/test/email?to=...
     @GetMapping("/email")
     public ResponseEntity<String> testEmail(@RequestParam String to) {
         emailService.sendEmail(

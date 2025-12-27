@@ -40,18 +40,15 @@ public class AuthService {
     @Value("${google.client-id}")
     private String GOOGLE_CLIENT_ID;
 
-    // --- CẬP NHẬT register: Thêm @Transactional để đảm bảo lưu cả 2 hoặc không lưu gì cả ---
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new BadRequestException("Email already exists");
         }
-        // Kiểm tra Phone bên Customer nữa (Vì phone là unique)
         if (customerRepository.findByPhone(request.getPhone()).isPresent()) {
             throw new BadRequestException("Phone number already used by another customer");
         }
 
-        // 1. Tạo User
         User user = new User();
         user.setEmail(request.getEmail());
         user.setFullName(request.getFullName());
@@ -62,18 +59,13 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // 2. TỰ ĐỘNG TẠO CUSTOMER
         Customer customer = new Customer();
         customer.setName(request.getFullName());
         customer.setEmail(request.getEmail());
         customer.setAddress(request.getAddress());
         customer.setDateOfBirth(request.getDateOfBirth());
-        // LƯU Ý: RegisterRequest cần có getPhone()
         customer.setPhone(request.getPhone());
-
-        // Liên kết với User vừa tạo
         customer.setUser(savedUser);
-
         customerRepository.save(customer);
 
         // 3. Tạo Token
@@ -121,31 +113,22 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .avatar(user.getAvatar());
-
-        // 6. ✅ LOGIC MỚI: Lấy thông tin chi tiết
-        // Cố gắng tìm hồ sơ Customer liên kết với User này
         Optional<Customer> customerOpt = customerRepository.findByUserId(user.getId());
 
         if (customerOpt.isPresent()) {
-            // Nếu là Customer -> Lấy thông tin từ bảng Customer (vì bảng này chuẩn nhất cho khách hàng)
             Customer customer = customerOpt.get();
             responseBuilder.customerId(customer.getId());
             responseBuilder.phone(customer.getPhone());
             responseBuilder.address(customer.getAddress());
             responseBuilder.dateOfBirth(customer.getDateOfBirth());
         } else {
-            // Nếu không phải Customer (ví dụ Admin/Staff) hoặc chưa có hồ sơ Customer
-            // Lấy tạm từ bảng User (nếu bảng User của bạn có các trường này)
             responseBuilder.address(user.getAddress());
             responseBuilder.dateOfBirth(user.getDateOfBirth());
-            // Phone có thể null nếu bảng User không có trường phone
         }
 
         return responseBuilder.build();
     }
 
-    // --- refreshToken, forgotPassword, verifyCode, resetPassword giữ nguyên ---
-    // (Tôi lược bỏ để ngắn gọn, bạn giữ nguyên code cũ)
     public AuthResponse refreshToken(RefreshTokenRequest request) { /* Code cũ */ return null; }
     public void forgotPassword(ForgotPasswordRequest request) { /* Code cũ */ }
     public boolean verifyCode(VerifyCodeRequest request) { /* Code cũ */ return true; }
@@ -203,19 +186,10 @@ public class AuthService {
         newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         newUser.setRole(UserRole.CUSTOMER); // Google login thường là Customer
         User savedUser = userRepository.save(newUser);
-
-        // 2. Tạo Customer
-        // VẤN ĐỀ: Customer.phone đang required (nullable=false)
-        // Bạn cần xử lý logic:
-        // Cách 1: Cho phép Customer.phone null (sửa entity)
-        // Cách 2: Sinh số tạm
         Customer newCustomer = new Customer();
         newCustomer.setEmail(email);
         newCustomer.setName(fullName);
         newCustomer.setUser(savedUser);
-
-        // TẠM THỜI: Để trống nếu bạn sửa entity Customer thành nullable=true cho phone
-        // Hoặc set giá trị tạm để pass qua DB constraint
         newCustomer.setPhone("GOOGLE_" + UUID.randomUUID().toString().substring(0,8));
 
         customerRepository.save(newCustomer);
